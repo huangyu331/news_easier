@@ -6,6 +6,7 @@ from urllib.request import urlopen
 from lxml import etree
 import sys
 
+###爬虫函数
 def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl):
     # r = requests.get(url,)
     # r.encoding = "utf-8"
@@ -42,7 +43,7 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl):
             pass
     return results
 
-
+###循环爬取
 def newsCrawl(needItem=None):
     config = {
         "国务院": {
