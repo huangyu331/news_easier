@@ -14,6 +14,11 @@ class MainGUI(tk.Tk):
         self.wait_window(pw)  # 这一句很重要！！！
         return
 
+    def site_manage(self):
+        pw = PopupSiteManageDialog(self)
+        self.wait_window(pw)  # 这一句很重要！！！
+        return
+
     def onDBClick(self, event):
         if self.tree.selection():
             index = self.listbox.curselection()
@@ -114,6 +119,7 @@ class MainGUI(tk.Tk):
         file = Menu(top, tearoff=0, font=("黑体", 15, "bold"))
         file.add_command(label='添加网址', command=self.open, underline=0)
         file.add_separator()
+        file.add_command(label='站点管理', command=self.site_manage, underline=0)
         file.add_command(label='退出', command=sys.exit, underline=0)
         top.add_cascade(label='文件', menu=file, underline=0)
         help_menu = Menu(top, tearoff=0, font=("黑体", 15, "bold"))
@@ -130,28 +136,63 @@ class PopupDialog(tk.Toplevel):
         mainFrame = Frame(self)
         mainFrame.pack(fill="x")
         categoryFrame = Frame(mainFrame)
-        Label(categoryFrame, text='分类名：', width=8).pack(side=LEFT)
+        Label(categoryFrame, text='网站名称：', width=8).pack(side=LEFT)
         categoryFrame.pack(pady=20)
-        self.name = tk.StringVar()
-        Entry(categoryFrame, textvariable=self.name, width=20).pack(side=LEFT)
+        self.site_name_entry = Entry(categoryFrame, width=20)
+        # self.site_name_text = Text(categoryFrame, height=2)
+        self.site_name_entry.pack(side=LEFT)
         urlFrame = Frame(mainFrame)
         urlFrame.pack(pady=20)
         Label(urlFrame, text='网址：', width=8).pack(side=LEFT)
-        self.age = tk.StringVar()
-        Entry(urlFrame, textvariable=self.age, width=20).pack(side=LEFT)
+        self.site_url = tk.StringVar()
+        Entry(urlFrame, textvariable=self.site_url, width=20).pack(side=LEFT)
         buttonFrame = Frame(mainFrame)
         Button(buttonFrame, text="确定", command=self.ok).pack(side=LEFT)
         Button(buttonFrame, text="取消", command=self.cancel).pack(side=LEFT)
         buttonFrame.pack(padx=100)
 
     def ok(self):
-        self.parent.name = self.name.get()
-        self.parent.age = self.age.get()
-        print(self.winfo_width(), self.winfo_height(), self.winfo_screenheight(), self.winfo_screenwidth())
+        name = self.site_name_entry.get()
+        url = self.site_url.get()
+        site_data = json.load(open('site_manage.json'))
+        site_data['site'].append({name: url})
+        json.dump(site_data, open('site_manage.json', 'w'))
         self.destroy()
 
     def cancel(self):
         self.destroy()
+
+
+class PopupSiteManageDialog(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__()
+        self.title('站点管理')
+        self.parent = parent
+        mainFrame = Frame(self)
+        mainFrame.pack(fill="x")
+        scrolly = Scrollbar(mainFrame)
+        scrolly.pack(side=RIGHT, fill=Y)
+        data = json.load(open('site_manage.json'))
+        site_data_list = data['site']
+        self.site_Manage_listbox = Listbox(mainFrame, selectmode=BROWSE, width=20,
+                                           height=22, yscrollcommand=scrolly.set)
+        for data in site_data_list:
+            self.site_Manage_listbox.insert(END, list(data.keys())[0])
+        self.site_Manage_listbox.bind('<ButtonRelease-1>', self.on_click_listbox)
+        self.site_Manage_listbox.pack(side=LEFT)
+        scrolly.config(command=self.site_Manage_listbox.yview)
+
+    def on_click_listbox(self, event):
+        data = json.load(open('site_manage.json'))
+        site_data_list = data['site']
+        index = self.site_Manage_listbox.curselection()
+        key = self.site_Manage_listbox.get(index[0])
+        for site in site_data_list:
+            value = site.get(key, None)
+            if value:
+                webbrowser.open(value)
+            break
+
 
 
 if __name__ == '__main__':
