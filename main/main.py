@@ -86,7 +86,7 @@ class MainGUI(tk.Tk):
         self.data_source_keys = self.data_source.keys()
         scrolly = Scrollbar(dataFrame)
         scrolly.pack(side=RIGHT, fill=Y)
-        self.listbox = Listbox(dataFrame, selectmode=BROWSE, width=20,
+        self.listbox = Listbox(dataFrame, selectmode=EXTENDED, width=20,
                                height=22, yscrollcommand=scrolly.set)
         for value in self.data_source_keys:
             self.listbox.insert(END, value)
@@ -114,15 +114,15 @@ class MainGUI(tk.Tk):
         self.tree.bind("<Double-1>", self.onDBClick)
         listFrame.pack()
         mainFrame.pack()
-        top = Menu(self, font=("黑体", 15, "bold"))
+        top = Menu(self, font=("黑体", 12, "bold"))
         self.config(menu=top)
-        file = Menu(top, tearoff=0, font=("黑体", 15, "bold"))
+        file = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
         file.add_command(label='添加网址', command=self.open, underline=0)
         file.add_separator()
         file.add_command(label='站点管理', command=self.site_manage, underline=0)
         file.add_command(label='退出', command=sys.exit, underline=0)
         top.add_cascade(label='文件', menu=file, underline=0)
-        help_menu = Menu(top, tearoff=0, font=("黑体", 15, "bold"))
+        help_menu = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
         help_menu.add_command(label='帮助')
         top.add_cascade(label='帮助', menu=help_menu)
         self.mainloop()
@@ -136,7 +136,7 @@ class PopupDialog(tk.Toplevel):
         mainFrame = Frame(self)
         mainFrame.pack(fill="x")
         categoryFrame = Frame(mainFrame)
-        Label(categoryFrame, text='网站名称：', width=8).pack(side=LEFT)
+        Label(categoryFrame, text='名称：', width=8).pack(side=LEFT)
         categoryFrame.pack(pady=20)
         self.site_name_entry = Entry(categoryFrame, width=20)
         # self.site_name_text = Text(categoryFrame, height=2)
@@ -147,16 +147,17 @@ class PopupDialog(tk.Toplevel):
         self.site_url = tk.StringVar()
         Entry(urlFrame, textvariable=self.site_url, width=20).pack(side=LEFT)
         buttonFrame = Frame(mainFrame)
-        Button(buttonFrame, text="确定", command=self.ok).pack(side=LEFT)
-        Button(buttonFrame, text="取消", command=self.cancel).pack(side=LEFT)
+        Button(buttonFrame, text="确定", command=self.ok).pack(side=LEFT, padx=10)
+        Button(buttonFrame, text="取消", command=self.cancel).pack(side=LEFT, padx=10)
         buttonFrame.pack(padx=100)
 
     def ok(self):
         name = self.site_name_entry.get()
         url = self.site_url.get()
-        site_data = json.load(open('site_manage.json'))
-        site_data['site'].append({name: url})
-        json.dump(site_data, open('site_manage.json', 'w'))
+        if name and url:
+            site_data = json.load(open('site_manage.json'))
+            site_data['site'].append({name: url})
+            json.dump(site_data, open('site_manage.json', 'w'))
         self.destroy()
 
     def cancel(self):
@@ -170,29 +171,50 @@ class PopupSiteManageDialog(tk.Toplevel):
         self.parent = parent
         mainFrame = Frame(self)
         mainFrame.pack(fill="x")
-        scrolly = Scrollbar(mainFrame)
+        leftFrame = Frame(mainFrame)
+        scrolly = Scrollbar(leftFrame)
         scrolly.pack(side=RIGHT, fill=Y)
+        lb = Label(leftFrame, text='数据源', pady=10)
+        lb.pack(side=TOP)
         data = json.load(open('site_manage.json'))
         site_data_list = data['site']
-        self.site_Manage_listbox = Listbox(mainFrame, selectmode=BROWSE, width=20,
+        self.site_Manage_listbox = Listbox(leftFrame, selectmode=BROWSE, width=30,
                                            height=22, yscrollcommand=scrolly.set)
         for data in site_data_list:
             self.site_Manage_listbox.insert(END, list(data.keys())[0])
-        self.site_Manage_listbox.bind('<ButtonRelease-1>', self.on_click_listbox)
-        self.site_Manage_listbox.pack(side=LEFT)
+        self.site_Manage_listbox.bind('<Double-Button-1>', self.on_click_listbox)
+        self.site_Manage_listbox.pack(side=LEFT, padx=20, pady=10)
         scrolly.config(command=self.site_Manage_listbox.yview)
+        leftFrame.pack(side=LEFT)
+        rightFrame = Frame(mainFrame)
+        Button(rightFrame, text="移除", command=self.remove).pack(side=LEFT, padx=20)
+        rightFrame.pack(side=RIGHT)
+
+    def remove(self):
+        index_tuple = self.site_Manage_listbox.curselection()
+        if index_tuple:
+            data = json.load(open('site_manage.json'))
+            site_data_list = data['site']
+            for index in index_tuple:
+                del site_data_list[index]
+                self.site_Manage_listbox.delete(index)
+            data['site'] = site_data_list
+            json.dump(data, open('site_manage.json', 'w'))
 
     def on_click_listbox(self, event):
         data = json.load(open('site_manage.json'))
         site_data_list = data['site']
         index = self.site_Manage_listbox.curselection()
+        print(index)
         key = self.site_Manage_listbox.get(index[0])
+        print(key)
         for site in site_data_list:
+            print('site:', site)
             value = site.get(key, None)
+            print('value:', value)
             if value:
                 webbrowser.open(value)
-            break
-
+                break
 
 
 if __name__ == '__main__':
