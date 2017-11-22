@@ -71,6 +71,18 @@ class MainGUI(tk.Tk):
         data = json.load(open('data.json'))
         return data
 
+    def refresh(self):
+        index_tuple = self.listbox.curselection()
+        if index_tuple:
+            index = index_tuple[0]
+            value = self.listbox.get(index)
+            result = newsCrawl([value])
+            json.dump(result, open('data.json', 'w'))
+
+    def refresh_all(self):
+        result = newsCrawl()
+        json.dump(result, open('data.json', 'w'))
+
     def __init__(self):
         super().__init__()
         # self.iconbitmap('calculator.ico')
@@ -86,7 +98,7 @@ class MainGUI(tk.Tk):
         self.data_source_keys = self.data_source.keys()
         scrolly = Scrollbar(dataFrame)
         scrolly.pack(side=RIGHT, fill=Y)
-        self.listbox = Listbox(dataFrame, selectmode=EXTENDED, width=20,
+        self.listbox = Listbox(dataFrame, selectmode=BROWSE, width=20,
                                height=22, yscrollcommand=scrolly.set)
         for value in self.data_source_keys:
             self.listbox.insert(END, value)
@@ -112,7 +124,12 @@ class MainGUI(tk.Tk):
         ysb.grid(row=1, column=1, sticky='ns')
         xsb.grid(row=2, column=0, sticky='ew')
         self.tree.bind("<Double-1>", self.onDBClick)
-        listFrame.pack()
+        listFrame.pack(side=RIGHT)
+        refreshFrame = Frame(dataFrame)
+        Button(refreshFrame, text="刷新选中", command=self.refresh).pack(padx=10, pady=20)
+        Button(refreshFrame, text="刷新全部", command=self.refresh_all).pack(padx=10, pady=20)
+        refreshFrame.pack(side=LEFT)
+
         mainFrame.pack()
         top = Menu(self, font=("黑体", 12, "bold"))
         self.config(menu=top)
@@ -139,7 +156,6 @@ class PopupDialog(tk.Toplevel):
         Label(categoryFrame, text='名称：', width=8).pack(side=LEFT)
         categoryFrame.pack(pady=20)
         self.site_name_entry = Entry(categoryFrame, width=20)
-        # self.site_name_text = Text(categoryFrame, height=2)
         self.site_name_entry.pack(side=LEFT)
         urlFrame = Frame(mainFrame)
         urlFrame.pack(pady=20)
@@ -178,7 +194,7 @@ class PopupSiteManageDialog(tk.Toplevel):
         lb.pack(side=TOP)
         data = json.load(open('site_manage.json'))
         site_data_list = data['site']
-        self.site_Manage_listbox = Listbox(leftFrame, selectmode=BROWSE, width=30,
+        self.site_Manage_listbox = Listbox(leftFrame, selectmode=MULTIPLE, width=30,
                                            height=22, yscrollcommand=scrolly.set)
         for data in site_data_list:
             self.site_Manage_listbox.insert(END, list(data.keys())[0])
@@ -195,7 +211,9 @@ class PopupSiteManageDialog(tk.Toplevel):
         if index_tuple:
             data = json.load(open('site_manage.json'))
             site_data_list = data['site']
-            for index in index_tuple:
+            index_list = list(index_tuple)
+            index_list.sort(key=lambda x:-x)
+            for index in index_list:
                 del site_data_list[index]
                 self.site_Manage_listbox.delete(index)
             data['site'] = site_data_list
