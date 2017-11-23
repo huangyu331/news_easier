@@ -85,9 +85,8 @@ def newsCrawl(needItem=None):
                 )
     return result
 
-
 if __name__ == "__main__":
-    needItem = ["国务院", "证监会"]
+    needItem = ["证监会"]
     result = newsCrawl(needItem)
     print(type(result), result)
     json.dump(result, open('data.json', 'w'))

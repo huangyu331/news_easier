@@ -5,6 +5,7 @@ from tkinter.scrolledtext import ScrolledText, Scrollbar
 import json
 import tkinter as tk
 from crawler import *
+import datetime
 
 
 class MainGUI(tk.Tk):
@@ -28,6 +29,7 @@ class MainGUI(tk.Tk):
             title = values[0]
             data = self.data_source.get(data_source_key)
             url = data[title]['url']
+            print('url:', url)
             webbrowser.open(url)
             data[title]['tag'] = 'clicked'
             values_list = []
@@ -77,7 +79,20 @@ class MainGUI(tk.Tk):
             index = index_tuple[0]
             value = self.listbox.get(index)
             result = newsCrawl([value])
-            json.dump(result, open('data.json', 'w'))
+            keys = result.keys()
+            for key in keys:
+                if result[key]:
+                    prev_dict = self.data_source[key]
+                    new_dict = result[key]
+                    new_dict_keys = new_dict.keys()
+                    for key1 in new_dict_keys:
+                        if prev_dict.get(key1):
+                            new_dict[key1] = prev_dict[key1]
+                            new_dict[key1]['updated_at'] = \
+                                str(datetime.datetime.now().replace(microsecond=0))
+                    self.data_source[key] = new_dict
+            json.dump(self.data_source, open('data.json', 'w'))
+            self.on_click_listbox(1)
 
     def refresh_all(self):
         result = newsCrawl()
