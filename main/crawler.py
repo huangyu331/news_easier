@@ -402,6 +402,9 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
                     articleUrl = replaceUrl[1]  + articleUrl
             if "http://" not in articleUrl:
                 articleUrl = replaceUrl[2] + articleUrl
+            if not date:
+                title, date = title.split("（")
+                date = "（" + date
             results[title] = {
                 "title":title,
                 "updated_at":datetime.datetime.strftime(datetime.datetime.now(),"%Y-%m-%d %H:%M:%S"),
