@@ -144,6 +144,20 @@ class MainGUI(tk.Tk):
         t = threading.Thread(target=self.start_refresh_all)
         t.start()
 
+    def search(self):
+        keyword = self.keywordEntry.get()
+        index = self.listbox.curselection()
+        if index:
+            key = self.listbox.get(index[0])
+            values_dict = self.data_source.get(key, [])
+            values_list = []
+            keys = values_dict.keys()
+            for key in keys:
+                title = values_dict[key]['title']
+                if keyword in title:
+                    values_list.append(values_dict[key])
+            self.new_tree(values_list)
+
     def __init__(self):
         super().__init__()
         # self.iconbitmap('calculator.ico')
@@ -153,38 +167,45 @@ class MainGUI(tk.Tk):
         mainFrame = Frame(self)
         dataFrame = Frame(mainFrame)
         listFrame = Frame(mainFrame)
-        lb = Label(dataFrame, text='数据源', pady=10)
-        lb.pack(side=TOP)
+        lb = Label(dataFrame, text='数据源', pady=10, padx=50)
+        lb.pack(side=TOP, anchor=W)
         self.data_source = self.get_data_source()
         self.data_source_keys = self.data_source.keys()
         scrolly = Scrollbar(dataFrame)
         scrolly.pack(side=RIGHT, fill=Y)
         self.listbox = Listbox(dataFrame, selectmode=BROWSE, width=20,
-                               height=32, yscrollcommand=scrolly.set)
+                               height=30, yscrollcommand=scrolly.set)
         for value in self.data_source_keys:
             self.listbox.insert(END, value)
         self.listbox.bind('<ButtonRelease-1>', self.on_click_listbox)
         self.listbox.pack(side=LEFT)
         scrolly.config(command=self.listbox.yview)
         dataFrame.pack(side=LEFT, anchor=N, padx=41)
-        Label(listFrame, text='数据列表', pady=10).grid(row=0, column=0)
-
-        self.tree = ttk.Treeview(listFrame, show='headings', selectmode='extended',
-                                 columns=('col1', 'col2', 'col3'), height=30)
+        list_search_frame = Frame(listFrame)
+        list_show_frame = Frame(listFrame)
+        Label(list_search_frame, text='关键字:', pady=10).pack(side=LEFT)
+        self.keywordEntry = Entry(list_search_frame)
+        self.keywordEntry.pack(side=LEFT)
+        Button(list_search_frame, text='搜索', command=self.search, padx=20).pack(side=LEFT, padx=50)
+        # Label(list_show_frame, text='数据列表', pady=10).grid(row=1, column=0)
+        self.tree = ttk.Treeview(list_show_frame, show='headings', selectmode='extended',
+                                 columns=('col1', 'col2', 'col3'), height=28)
         self.tree.column('col1', width=400, anchor='center')
         self.tree.column('col2', width=200, anchor='center')
         self.tree.column('col3', width=200, anchor='center')
         self.tree.heading('col1', text='标题')
         self.tree.heading('col2', text='发布时间')
         self.tree.heading('col3', text='更新时间')
-        ysb = ttk.Scrollbar(listFrame, orient='vertical', command=self.tree.yview)
-        xsb = ttk.Scrollbar(listFrame, orient='horizontal', command=self.tree.xview)
+        ysb = ttk.Scrollbar(list_show_frame, orient='vertical', command=self.tree.yview)
+        xsb = ttk.Scrollbar(list_show_frame, orient='horizontal', command=self.tree.xview)
         self.tree.configure(yscroll=ysb.set, xscroll=xsb.set)
         self.tree.tag_configure('clicked', background='LightGrey')
-        self.tree.grid(row=1, column=0)
-        ysb.grid(row=1, column=1, sticky='ns')
-        xsb.grid(row=2, column=0, sticky='ew')
+        self.tree.grid(row=2, column=0)
+        ysb.grid(row=2, column=1, sticky='ns')
+        xsb.grid(row=3, column=0, sticky='ew')
         self.tree.bind("<Double-1>", self.onDBClick)
+        list_search_frame.pack(side=TOP)
+        list_show_frame.pack(side=BOTTOM)
         listFrame.pack(side=RIGHT)
         refreshFrame = Frame(dataFrame)
         Button(refreshFrame, text="刷新选中", command=self.refresh).pack(padx=10, pady=20)
