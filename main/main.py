@@ -96,6 +96,18 @@ class MainGUI(tk.Tk):
 
     def refresh_all(self):
         result = newsCrawl()
+        keys = result.keys()
+        for key in keys:
+            if result[key]:
+                prev_dict = self.data_source[key]
+                new_dict = result[key]
+                new_dict_keys = new_dict.keys()
+                for key1 in new_dict_keys:
+                    if prev_dict.get(key1):
+                        new_dict[key1] = prev_dict[key1]
+                        new_dict[key1]['updated_at'] = \
+                            str(datetime.datetime.now().replace(microsecond=0))
+                self.data_source[key] = new_dict
         json.dump(result, open('data.json', 'w'))
 
     def __init__(self):
@@ -149,9 +161,9 @@ class MainGUI(tk.Tk):
         top = Menu(self, font=("黑体", 12, "bold"))
         self.config(menu=top)
         file = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
-        file.add_command(label='添加网址', command=self.open, underline=0)
+        file.add_command(label='添加收藏', command=self.open, underline=0)
         file.add_separator()
-        file.add_command(label='站点管理', command=self.site_manage, underline=0)
+        file.add_command(label='收藏管理', command=self.site_manage, underline=0)
         file.add_command(label='退出', command=sys.exit, underline=0)
         top.add_cascade(label='文件', menu=file, underline=0)
         help_menu = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
@@ -163,12 +175,12 @@ class MainGUI(tk.Tk):
 class PopupDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__()
-        self.title('添加新网址')
+        self.title('添加收藏')
         self.parent = parent
         mainFrame = Frame(self)
         mainFrame.pack(fill="x")
         categoryFrame = Frame(mainFrame)
-        Label(categoryFrame, text='名称：', width=8).pack(side=LEFT)
+        Label(categoryFrame, text='标签：', width=8).pack(side=LEFT)
         categoryFrame.pack(pady=20)
         self.site_name_entry = Entry(categoryFrame, width=20)
         self.site_name_entry.pack(side=LEFT)
@@ -198,7 +210,7 @@ class PopupDialog(tk.Toplevel):
 class PopupSiteManageDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__()
-        self.title('站点管理')
+        self.title('收藏管理')
         self.parent = parent
         mainFrame = Frame(self)
         mainFrame.pack(fill="x")

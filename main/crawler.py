@@ -2,12 +2,8 @@
 import json
 
 import datetime
-import requests
-import urllib2
+import urllib.request as urllib2
 from lxml import etree
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 
 headers = {
@@ -371,7 +367,7 @@ config = {
 }
 
 
-def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl):
+def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, category):
     # r = requests.get(url,)
     # r.encoding = "utf-8"
     # coding = r.encoding
@@ -380,8 +376,10 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl):
     # r = urllib2.urlopen(url)
     req = urllib2.Request(url)
     req.add_header("User-Agent",headers["User-Agent"])
-    r = urllib2.urlopen(req)
+    r = urllib2.urlopen(req, timeout=1000)
     body = r.read()
+    if category == '食药监局':
+        body = body.decode('gb2312')
     html = etree.HTML(body)
     sels = html.xpath(xpath)
     results = {}
@@ -403,7 +401,6 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl):
                     articleUrl = replaceUrl[1]  + articleUrl
             if "http://" not in articleUrl:
                 articleUrl = replaceUrl[2] + articleUrl
-            # print date,title,articleUrl
             results[title] = {
                 "title":title,
                 "updated_at":datetime.datetime.strftime(datetime.datetime.now(),"%Y-%m-%d %H:%M:%S"),
@@ -416,7 +413,7 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl):
 
 
 def newsCrawl(needItem=None):
-
+    print('begin:', datetime.datetime.now())
     result = {}
     for key, item in config.items():
         result[key] = {}
@@ -424,24 +421,24 @@ def newsCrawl(needItem=None):
             if key in needItem:
                 for url in item:
                     conf = item[url]
-                    result[key].update(
-                        crawler(url, conf['xpath'], conf['dateXpath'], conf['titleXpath'], conf['urlXpath'],
-                                               conf['replaceUrl'])
-                    )
+                    result_get = crawler(url, conf['xpath'], conf['dateXpath'],
+                                     conf['titleXpath'], conf['urlXpath'],
+                                     conf['replaceUrl'], key)
+                    result[key].update(result_get)
         else:
             for url in item:
                 conf = item[url]
                 result[key].update(
                     crawler(url, conf['xpath'], conf['dateXpath'], conf['titleXpath'], conf['urlXpath'],
-                            conf['replaceUrl'])
+                            conf['replaceUrl'], key)
                 )
+    print('end:', datetime.datetime.now())
     return result
 
 
 if __name__ == "__main__":
     needItem = ["国务院","证监会","保监会","国土资源部","国资委","财政部","能源局","铁道部","中科院","工信部","商务部","旅游局","农业部","人社部","社科院","城乡建设部","交通运输部","民政部","国防部","教育部","监察部","司法部","文化部","统计局","体育总局","食药监局","网易科技","环球科技（5G）"]
-    result =  newsCrawl(needItem)
-    print(type(result), result)
+    result = newsCrawl(needItem)
     json.dump(result, open('data.json', 'w'))
 
     # with open("text",'w') as code:
