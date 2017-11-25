@@ -6,18 +6,20 @@ import json
 import tkinter as tk
 from crawler import *
 import datetime
+from tkinter.messagebox import *
+import threading
 
 
 class MainGUI(tk.Tk):
 
     def open(self):
         pw = PopupDialog(self)
-        self.wait_window(pw)  # 这一句很重要！！！
+        self.wait_window(pw)
         return
 
     def site_manage(self):
         pw = PopupSiteManageDialog(self)
-        self.wait_window(pw)  # 这一句很重要！！！
+        self.wait_window(pw)
         return
 
     def onDBClick(self, event):
@@ -58,13 +60,14 @@ class MainGUI(tk.Tk):
 
     def on_click_listbox(self, event):
         index = self.listbox.curselection()
-        key = self.listbox.get(index[0])
-        values_dict = self.data_source.get(key, [])
-        values_list = []
-        keys = values_dict.keys()
-        for key in keys:
-            values_list.append(values_dict[key])
-        self.new_tree(values_list)
+        if index:
+            key = self.listbox.get(index[0])
+            values_dict = self.data_source.get(key, [])
+            values_list = []
+            keys = values_dict.keys()
+            for key in keys:
+                values_list.append(values_dict[key])
+            self.new_tree(values_list)
 
     def add_data_source(self, item):
         self.data_source.append(item)
@@ -74,11 +77,47 @@ class MainGUI(tk.Tk):
         return data
 
     def refresh(self):
+        t = threading.Thread(target=self.start_refresh_selected)
+        t.start()
+
+    def start_refresh_selected(self):
+        self.progress.set(0)
         index_tuple = self.listbox.curselection()
         if index_tuple:
             index = index_tuple[0]
             value = self.listbox.get(index)
-            result = newsCrawl([value])
+            try:
+                result = newsCrawl(self, [value])
+            except Exception as e:
+                showerror(title='错误❌', message='网络异常，更新失败')
+            else:
+                keys = result.keys()
+                for key in keys:
+                    if result[key]:
+                        prev_dict = self.data_source[key]
+                        new_dict = result[key]
+                        new_dict_keys = new_dict.keys()
+                        for key1 in new_dict_keys:
+                            if prev_dict.get(key1):
+                                new_dict[key1] = prev_dict[key1]
+                                new_dict[key1]['updated_at'] = \
+                                    str(datetime.datetime.now().replace(microsecond=0))
+                        self.data_source[key] = new_dict
+                try:
+                    json.dump(self.data_source, open('data.json', 'w'))
+                    self.on_click_listbox(1)
+                except Exception as e:
+                    showerror(title='错误❌', message='未知异常，请联系开发人员')
+                else:
+                    showinfo(title='提示✅', message='更新成功！')
+
+    def start_refresh_all(self):
+        try:
+            result = newsCrawl(self)
+        except Exception as e:
+            print('error:', e)
+            showerror(title='错误❌', message='网络不给力，请尝试单个刷新')
+        else:
             keys = result.keys()
             for key in keys:
                 if result[key]:
@@ -91,24 +130,19 @@ class MainGUI(tk.Tk):
                             new_dict[key1]['updated_at'] = \
                                 str(datetime.datetime.now().replace(microsecond=0))
                     self.data_source[key] = new_dict
-            json.dump(self.data_source, open('data.json', 'w'))
-            self.on_click_listbox(1)
+            try:
+                json.dump(result, open('data.json', 'w'))
+                self.on_click_listbox(1)
+            except Exception as e:
+                print('error:', e)
+                showerror(title='错误❌', message='未知异常，请联系开发人员')
+            else:
+                showinfo(title='提示✅', message='更新成功！')
 
     def refresh_all(self):
-        result = newsCrawl()
-        keys = result.keys()
-        for key in keys:
-            if result[key]:
-                prev_dict = self.data_source[key]
-                new_dict = result[key]
-                new_dict_keys = new_dict.keys()
-                for key1 in new_dict_keys:
-                    if prev_dict.get(key1):
-                        new_dict[key1] = prev_dict[key1]
-                        new_dict[key1]['updated_at'] = \
-                            str(datetime.datetime.now().replace(microsecond=0))
-                self.data_source[key] = new_dict
-        json.dump(result, open('data.json', 'w'))
+        self.progress.set(0)
+        t = threading.Thread(target=self.start_refresh_all)
+        t.start()
 
     def __init__(self):
         super().__init__()
@@ -126,7 +160,7 @@ class MainGUI(tk.Tk):
         scrolly = Scrollbar(dataFrame)
         scrolly.pack(side=RIGHT, fill=Y)
         self.listbox = Listbox(dataFrame, selectmode=BROWSE, width=20,
-                               height=22, yscrollcommand=scrolly.set)
+                               height=32, yscrollcommand=scrolly.set)
         for value in self.data_source_keys:
             self.listbox.insert(END, value)
         self.listbox.bind('<ButtonRelease-1>', self.on_click_listbox)
@@ -136,7 +170,7 @@ class MainGUI(tk.Tk):
         Label(listFrame, text='数据列表', pady=10).grid(row=0, column=0)
 
         self.tree = ttk.Treeview(listFrame, show='headings', selectmode='extended',
-                                 columns=('col1', 'col2', 'col3'), height=20)
+                                 columns=('col1', 'col2', 'col3'), height=30)
         self.tree.column('col1', width=400, anchor='center')
         self.tree.column('col2', width=200, anchor='center')
         self.tree.column('col3', width=200, anchor='center')
@@ -155,6 +189,12 @@ class MainGUI(tk.Tk):
         refreshFrame = Frame(dataFrame)
         Button(refreshFrame, text="刷新选中", command=self.refresh).pack(padx=10, pady=20)
         Button(refreshFrame, text="刷新全部", command=self.refresh_all).pack(padx=10, pady=20)
+        progress_frame = Frame(refreshFrame)
+        Label(progress_frame, text='进度条:', width=8).pack(side=LEFT)
+        self.progress = Scale(progress_frame, from_=0, to=100, resolution=1,
+                              orient=HORIZONTAL, troughcolor='green')
+        self.progress.pack(side=LEFT)
+        progress_frame.pack(padx=10, pady=20)
         refreshFrame.pack(side=LEFT)
 
         mainFrame.pack()
@@ -166,9 +206,9 @@ class MainGUI(tk.Tk):
         file.add_command(label='收藏管理', command=self.site_manage, underline=0)
         file.add_command(label='退出', command=sys.exit, underline=0)
         top.add_cascade(label='文件', menu=file, underline=0)
-        help_menu = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
-        help_menu.add_command(label='帮助')
-        top.add_cascade(label='帮助', menu=help_menu)
+        # help_menu = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
+        # help_menu.add_command(label='帮助')
+        # top.add_cascade(label='帮助', menu=help_menu)
         self.mainloop()
 
 
@@ -260,8 +300,3 @@ class PopupSiteManageDialog(tk.Toplevel):
             if value:
                 webbrowser.open(value)
                 break
-
-
-if __name__ == '__main__':
-    main = MainGUI()
-

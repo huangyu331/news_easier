@@ -4,6 +4,7 @@ import json
 import datetime
 import urllib.request as urllib2
 from lxml import etree
+from urllib.error import HTTPError
 
 
 headers = {
@@ -95,7 +96,7 @@ config = {
             "dateXpath": 'span/text()',
             "titleXpath": 'a/@title',
             "urlXpath": 'a/@href',
-            "replaceUrl": ("../../", 'http://www.sasac.gov.cn/')
+            "replaceUrl": ("../../", r'http://www.sasac.gov.cn/')
         },
         "http://www.sasac.gov.cn/n2588025/n2588124/index.html": {
             "xpath": '//div[@class="zsy_conlist"]/ul/span/li',
@@ -377,7 +378,10 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
     # r = urllib2.urlopen(url)
     req = urllib2.Request(url)
     req.add_header("User-Agent",headers["User-Agent"])
-    r = urllib2.urlopen(req, timeout=1000)
+    try:
+        r = urllib2.urlopen(req, timeout=50)
+    except HTTPError as error:
+        r = urllib2.urlopen(req, timeout=50)
     body = r.read()
     if decode:
         body = body.decode(decode)
@@ -399,7 +403,7 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
                 if replaceUrl[0]:
                     articleUrl = articleUrl.replace(replaceUrl[0],replaceUrl[1])
                 else:
-                    articleUrl = replaceUrl[1]  + articleUrl
+                    articleUrl = replaceUrl[1] + articleUrl
             if "http://" not in articleUrl:
                 articleUrl = replaceUrl[2] + articleUrl
             if not date:
@@ -416,10 +420,15 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
     return results
 
 
-def newsCrawl(needItem=None):
+def newsCrawl(widget, needItem=None):
     print('begin:', datetime.datetime.now())
     result = {}
+    total_category_num = len(config.items())
+    tem_index = 1
     for key, item in config.items():
+        print(int(tem_index / total_category_num * 100))
+        widget.progress.set(int(tem_index / total_category_num * 100))
+        tem_index += 1
         result[key] = {}
         if needItem:
             if key in needItem:
@@ -439,11 +448,42 @@ def newsCrawl(needItem=None):
     print('end:', datetime.datetime.now())
     return result
 
+def newsCrawl1(needItem=None):
+    print('begin:', datetime.datetime.now())
+    result = {}
+    total_category_num = len(config)
+    tem_index = 1
+    for key, item in config.items():
+        result[key] = {}
+        if needItem:
+            total_category_num = len(needItem)
+            if key in needItem:
+                for url in item:
+                    conf = item[url]
+                    result_get = crawler(url, conf['xpath'], conf['dateXpath'],
+                                     conf['titleXpath'], conf['urlXpath'],
+                                     conf['replaceUrl'])
+                    result[key].update(result_get)
+                # widget.progress.set(int(tem_index / total_category_num) * 100)
+                # tem_index += 1
+        else:
+            for url in item:
+                conf = item[url]
+                result[key].update(
+                    crawler(url, conf['xpath'], conf['dateXpath'], conf['titleXpath'], conf['urlXpath'],
+                            conf['replaceUrl'], conf.get("decode",None))
+                )
+            # widget.progress.set(int(tem_index / total_category_num) * 100)
+            # tem_index += 1
+    print('end:', datetime.datetime.now())
+    return result
+
 
 if __name__ == "__main__":
-    needItem = ["国务院","证监会","保监会","国土资源部","国资委","财政部","能源局","铁道部","中科院","工信部","商务部","旅游局","农业部","人社部","社科院","城乡建设部","交通运输部","民政部","国防部","教育部","监察部","司法部","文化部","统计局","体育总局","食药监局","网易科技","环球科技（5G）"]
-    result = newsCrawl(needItem)
-    json.dump(result, open('data.json', 'w'))
+    # needItem = ["国务院","证监会","保监会","国土资源部","国资委","财政部","能源局","铁道部","中科院","工信部","商务部","旅游局","农业部","人社部","社科院","城乡建设部","交通运输部","民政部","国防部","教育部","监察部","司法部","文化部","统计局","体育总局","食药监局","网易科技","环球科技（5G）"]
+    # result = newsCrawl1(needItem)
+    # json.dump(result, open('data.json', 'w'))
+    print(len(config))
 
 
 
