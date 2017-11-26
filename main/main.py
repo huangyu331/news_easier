@@ -198,7 +198,7 @@ class MainGUI(tk.Tk):
 
     def __init__(self):
         super().__init__()
-        # self.iconbitmap('calculator.ico')
+        self.iconbitmap('lo.ico')
         self.title('news easier')
         self.geometry('+100+100')
         self.minsize(400, 400)
