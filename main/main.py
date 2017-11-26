@@ -8,6 +8,7 @@ from crawler import *
 import datetime
 from tkinter.messagebox import *
 import threading
+import time
 
 
 class MainGUI(tk.Tk):
@@ -22,6 +23,16 @@ class MainGUI(tk.Tk):
         self.wait_window(pw)
         return
 
+    def refresh_config(self):
+        pw = RefreshConfigDialog(self)
+        self.wait_window(pw)
+        return
+
+    def popup_new_contents(self):
+        pw = ShowNewSitesDialog(self)
+        self.wait_window(pw)
+        return
+
     def onDBClick(self, event):
         if self.tree.selection():
             index = self.listbox.curselection()
@@ -31,7 +42,6 @@ class MainGUI(tk.Tk):
             title = values[0]
             data = self.data_source.get(data_source_key)
             url = data[title]['url']
-            print('url:', url)
             webbrowser.open(url)
             data[title]['tag'] = 'clicked'
             values_list = []
@@ -111,12 +121,14 @@ class MainGUI(tk.Tk):
                 else:
                     showinfo(title='提示✅', message='更新成功！')
 
-    def start_refresh_all(self):
+    def start_refresh_all(self, auto=None):
+        self.new_list = []
         try:
             result = newsCrawl(self)
         except Exception as e:
             print('error:', e)
-            showerror(title='错误❌', message='网络不给力，请尝试单个刷新')
+            showerror(title='错误❌', message='网络不给力，请重试或尝试单个刷新')
+            raise Exception()
         else:
             keys = result.keys()
             for key in keys:
@@ -129,6 +141,10 @@ class MainGUI(tk.Tk):
                             new_dict[key1] = prev_dict[key1]
                             new_dict[key1]['updated_at'] = \
                                 str(datetime.datetime.now().replace(microsecond=0))
+                        else:
+                            new_dict[key1]['updated_at'] = \
+                                str(datetime.datetime.now().replace(microsecond=0))
+                            self.new_list.append(new_dict[key1])
                     self.data_source[key] = new_dict
             try:
                 json.dump(result, open('data.json', 'w'))
@@ -136,13 +152,35 @@ class MainGUI(tk.Tk):
             except Exception as e:
                 print('error:', e)
                 showerror(title='错误❌', message='未知异常，请联系开发人员')
+                raise Exception()
             else:
-                showinfo(title='提示✅', message='更新成功！')
+                if auto:
+                    if self.new_list:
+                        self.popup_new_contents()
+                else:
+                    showinfo(title='提示✅', message='更新成功！')
 
     def refresh_all(self):
         self.progress.set(0)
         t = threading.Thread(target=self.start_refresh_all)
         t.start()
+
+    def auto_refresh_all(self):
+        while True:
+            try:
+                data = json.load(open('refresh_time.json', 'r'))
+            except Exception as e:
+                print('error:', e)
+            else:
+                time_refresh = data.get('time', 0)
+                if time_refresh:
+                    time_refresh = int(time_refresh) * 60
+                    self.progress.set(0)
+                    try:
+                        self.start_refresh_all(True)
+                    except Exception:
+                        pass
+                    time.sleep(time_refresh)
 
     def search(self):
         keyword = self.keywordEntry.get()
@@ -223,13 +261,17 @@ class MainGUI(tk.Tk):
         self.config(menu=top)
         file = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
         file.add_command(label='添加收藏', command=self.open, underline=0)
-        file.add_separator()
         file.add_command(label='收藏管理', command=self.site_manage, underline=0)
+        file.add_separator()
+        file.add_command(label='刷新设置', command=self.refresh_config, underline=0)
+        file.add_separator()
         file.add_command(label='退出', command=sys.exit, underline=0)
         top.add_cascade(label='文件', menu=file, underline=0)
         # help_menu = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
         # help_menu.add_command(label='帮助')
         # top.add_cascade(label='帮助', menu=help_menu)
+        t = threading.Thread(target=self.auto_refresh_all)
+        t.start()
         self.mainloop()
 
 
@@ -263,6 +305,68 @@ class PopupDialog(tk.Toplevel):
             site_data['site'].append({name: url})
             json.dump(site_data, open('site_manage.json', 'w'))
         self.destroy()
+
+    def cancel(self):
+        self.destroy()
+
+
+class RefreshConfigDialog(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__()
+        self.title('自动刷新设置')
+        self.parent = parent
+        mainFrame = Frame(self)
+        mainFrame.pack(fill="x")
+        timeFrame = Frame(mainFrame)
+        Label(timeFrame, text='时间(分)：', width=8).pack(side=LEFT)
+        timeFrame.pack(pady=20)
+        default_value = IntVar()
+        self.refresh_time_entry = Entry(timeFrame, width=10, textvariable=default_value)
+        self.refresh_time_entry.pack(side=LEFT)
+        buttonFrame = Frame(mainFrame)
+        Button(buttonFrame, text="确定", command=self.ok).pack(side=LEFT, padx=5)
+        Button(buttonFrame, text="取消", command=self.cancel).pack(side=LEFT, padx=5)
+        buttonFrame.pack(padx=100)
+
+    def ok(self):
+        refresh_time = self.refresh_time_entry.get()
+        if refresh_time:
+            data = json.load(open('refresh_time.json'))
+            data['time'] = refresh_time
+            json.dump(data, open('refresh_time.json', 'w'))
+        self.destroy()
+
+    def cancel(self):
+        self.destroy()
+
+
+class ShowNewSitesDialog(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__()
+        self.title('最新更新内容')
+        self.new_list = parent.new_list
+        mainFrame = Frame(self)
+        mainFrame.pack(fill="x")
+        scrolly = Scrollbar(mainFrame)
+        scrolly.pack(side=RIGHT, fill=Y)
+        self.listbox = Listbox(mainFrame, selectmode=BROWSE, width=100,
+                               height=20, yscrollcommand=scrolly.set)
+
+        for value in self.new_list:
+            self.listbox.insert(END, value.get('title', ''))
+        self.listbox.bind('<ButtonRelease-1>', self.on_click_listbox)
+        self.listbox.pack(side=LEFT, padx=10, pady=10)
+        scrolly.config(command=self.listbox.yview)
+
+    def on_click_listbox(self, event):
+        index = self.listbox.curselection()
+        if index:
+            key = self.listbox.get(index[0])
+            for item in self.new_list:
+                print('item:', item)
+                if item['title'] == key:
+                    webbrowser.open(item['url'])
+                    break
 
     def cancel(self):
         self.destroy()

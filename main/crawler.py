@@ -192,25 +192,6 @@ config = {
           }
     },
 
-    "人社部":{
-        "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/buneiyaowen/": {
-            "xpath": '//div[@class="serviceMainListTabCon"]',
-            "dateXpath": './div[3]/span/text()',
-            "titleXpath": './div/span/a/@title',
-            "urlXpath": './div/span/a/@href',
-            "replaceUrl": (
-            "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
-        },
-        "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/": {
-            "xpath": '//div[@class="serviceMainListTabCon"]',
-            "dateXpath": './div[3]/span/text()',
-            "titleXpath": './div/span/a/@title',
-            "urlXpath": './div/span/a/@href',
-            "replaceUrl": (
-            "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
-        }
-    },
-
     "社科院":{
         "http://cass.cssn.cn/yaowen/": {
           "xpath": '//div[@class="con"]/div/ul/li',
@@ -379,9 +360,9 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
     req = urllib2.Request(url)
     req.add_header("User-Agent",headers["User-Agent"])
     try:
-        r = urllib2.urlopen(req, timeout=50)
+        r = urllib2.urlopen(req, timeout=10)
     except HTTPError as error:
-        r = urllib2.urlopen(req, timeout=50)
+        r = urllib2.urlopen(req, timeout=10)
     body = r.read()
     if decode:
         body = body.decode(decode)
@@ -426,7 +407,6 @@ def newsCrawl(widget, needItem=None):
     total_category_num = len(config.items())
     tem_index = 1
     for key, item in config.items():
-        print(int(tem_index / total_category_num * 100))
         widget.progress.set(int(tem_index / total_category_num * 100))
         tem_index += 1
         result[key] = {}
@@ -434,10 +414,14 @@ def newsCrawl(widget, needItem=None):
             if key in needItem:
                 for url in item:
                     conf = item[url]
-                    result_get = crawler(url, conf['xpath'], conf['dateXpath'],
-                                     conf['titleXpath'], conf['urlXpath'],
-                                     conf['replaceUrl'])
-                    result[key].update(result_get)
+                    try:
+                        result_get = crawler(url, conf['xpath'], conf['dateXpath'],
+                                         conf['titleXpath'], conf['urlXpath'],
+                                         conf['replaceUrl'])
+                    except Exception as e:
+                        print('error', e)
+                    else:
+                        result[key].update(result_get)
         else:
             for url in item:
                 conf = item[url]
@@ -454,6 +438,7 @@ def newsCrawl1(needItem=None):
     total_category_num = len(config)
     tem_index = 1
     for key, item in config.items():
+        print('key:', key)
         result[key] = {}
         if needItem:
             total_category_num = len(needItem)
@@ -480,10 +465,9 @@ def newsCrawl1(needItem=None):
 
 
 if __name__ == "__main__":
-    # needItem = ["国务院","证监会","保监会","国土资源部","国资委","财政部","能源局","铁道部","中科院","工信部","商务部","旅游局","农业部","人社部","社科院","城乡建设部","交通运输部","民政部","国防部","教育部","监察部","司法部","文化部","统计局","体育总局","食药监局","网易科技","环球科技（5G）"]
-    # result = newsCrawl1(needItem)
-    # json.dump(result, open('data.json', 'w'))
-    print(len(config))
+    needItem = ["国务院","证监会","保监会","国土资源部","国资委","财政部","能源局","铁道部","中科院","工信部","商务部","旅游局","农业部","社科院","城乡建设部","交通运输部","民政部","国防部","教育部","监察部","司法部","文化部","统计局","体育总局","食药监局","网易科技","环球科技（5G）"]
+    result = newsCrawl1(needItem)
+    json.dump(result, open('data.json', 'w'))
 
 
 
