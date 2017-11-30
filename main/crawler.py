@@ -5,6 +5,7 @@ import datetime
 import urllib.request as urllib2
 from lxml import etree
 from urllib.error import HTTPError
+import time
 
 
 headers = {
@@ -346,6 +347,175 @@ config = {
             "urlXpath": './a/@href',
             "replaceUrl": (None, None)
         }
+    },
+    "盖世汽车资讯（新能源）":{
+        "http://auto.gasgoo.com/nev/C-501":{
+             "xpath": '//div[@class="listLeft"]/div',
+             "dateXpath": './div/div[3]/text()',
+             "titleXpath": './h2/a/text()',
+             "urlXpath": './h2/a/@href',
+             "replaceUrl": (None, 'http://auto.gasgoo.com')
+         },
+        "http://auto.gasgoo.com/smart-connected/C-601":{
+             "xpath": '//div[@class="listLeft"]/div',
+             "dateXpath": './div/div[3]/text()',
+             "titleXpath": './h2/a/text()',
+             "urlXpath": './h2/a/@href',
+             "replaceUrl": (None, 'http://auto.gasgoo.com')
+         },
+        "http://auto.gasgoo.com/after-market/C-105":{
+             "xpath": '//div[@class="listLeft"]/div',
+             "dateXpath": './div/div[3]/text()',
+             "titleXpath": './h2/a/text()',
+             "urlXpath": './h2/a/@href',
+             "replaceUrl": (None, 'http://auto.gasgoo.com')
+         },
+        "http://auto.gasgoo.com/commercial-vehicle/C-104":{
+             "xpath": '//div[@class="listLeft"]/div',
+             "dateXpath": './div/div[3]/text()',
+             "titleXpath": './h2/a/text()',
+             "urlXpath": './h2/a/@href',
+             "replaceUrl": (None, 'http://auto.gasgoo.com')
+         },
+        "http://auto.gasgoo.com/parts-news/C-103":{
+             "xpath": '//div[@class="listLeft"]/div',
+             "dateXpath": './div/div[3]/text()',
+             "titleXpath": './h2/a/text()',
+             "urlXpath": './h2/a/@href',
+             "replaceUrl": (None, 'http://auto.gasgoo.com')
+         },
+        "http://auto.gasgoo.com/global-news/C-101":{
+             "xpath": '//div[@class="listLeft"]/div',
+             "dateXpath": './div/div[3]/text()',
+             "titleXpath": './h2/a/text()',
+             "urlXpath": './h2/a/@href',
+             "replaceUrl": (None, 'http://auto.gasgoo.com')
+         }
+    },
+
+    "中国新闻网（财经）":{
+        "http://finance.chinanews.com/cj/gd.shtml":{
+             "xpath": '//div[@class="content_list"]/ul/li',
+             "dateXpath": './div[3]/text()',
+             "titleXpath": './div/a/text()',
+             "urlXpath": './div/a/@href',
+             "replaceUrl": (None, 'http://finance.chinanews.com')
+         }
+    },
+
+    "中国新闻网（产经）":{
+        "http://www.chinanews.com/business/gd.shtml":{
+             "xpath": '//div[@class="content_list"]/ul/li',
+             "dateXpath": './div[3]/text()',
+             "titleXpath": './div/a/text()',
+             "urlXpath": './div/a/@href',
+             "replaceUrl": (None, 'http://www.chinanews.com')
+        }
+    },
+
+    "中国新闻网（能源）":{
+        "http://www.chinanews.com/energy/gd.shtml":{
+            "xpath": '//div[@class="content_list"]/ul/li',
+            "dateXpath": './div[3]/text()',
+            "titleXpath": './div/a/text()',
+            "urlXpath": './div/a/@href',
+            "replaceUrl": (None, 'http://www.chinanews.com')
+        }
+    },
+
+    "证券时报网（财经）":{
+        "http://kuaixun.stcn.com/finance/internal/":{
+            "xpath": '//div[@class="mainlist"]/ul/li/p',
+            "dateXpath": './span/text()',
+            "titleXpath": './a/text()',
+            "urlXpath": './a/@href',
+            "replaceUrl": (None, None)
+        }
+    },
+
+    "证券时报网（实时滚动）":{
+        "http://www.stcn.com/gdxw/1.shtml":{
+            "xpath": '//div[@class="mainlist"]/ul/li/p',
+            "dateXpath": './span/text()',
+            "titleXpath": './a/text()',
+            "urlXpath": './a/@href',
+            "replaceUrl": (None, None)
+        }
+    },
+    "中证网（行业）":{
+        "http://www.cs.com.cn/ssgs/hyzx/":{
+            "xpath": '//div[@class="box1000"]/div/dl',
+            "dateXpath": './dd/span/text()',
+            "titleXpath": './dt/a/text()',
+            "urlXpath": './dt/a/@href',
+            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/hyzx/")
+        }
+    },
+
+    "中证网（科技）":{
+        "http://www.cs.com.cn/ssgs/kj/":{
+            "xpath": '//div[@class="box1000"]/div/dl',
+            "dateXpath": './dd/span/text()',
+            "titleXpath": './dt/a/text()',
+            "urlXpath": './dt/a/@href',
+            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/kj/")
+        }
+    },
+
+    "中证网（汽车）":{
+        "http://www.cs.com.cn/ssgs/qcgs/":{
+            "xpath": '//div[@class="box1000"]/div/dl',
+            "dateXpath": './dd/span/text()',
+            "titleXpath": './dt/a/text()',
+            "urlXpath": './dt/a/@href',
+            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/qcgs/")
+        }
+    },
+
+    "中证网（房产）":{
+        "http://www.cs.com.cn/ssgs/fcgs/":{
+            "xpath": '//div[@class="box1000"]/div/dl',
+            "dateXpath": './dd/span/text()',
+            "titleXpath": './dt/a/text()',
+            "urlXpath": './dt/a/@href',
+            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/fcgs/")
+        }
+    },
+    "腾讯财经（实时）":{
+        "http://roll.finance.qq.com/":{
+            "xpath": '//div[@class="mainCon"]/div[3]/ul/li',
+            "dateXpath": './span[1]/text()',
+            "titleXpath": './a/text()',
+            "urlXpath": './a/@href',
+            "replaceUrl": (None, None)
+        }
+    },
+    "新浪财经（产经）":{
+        "http://feed.mix.sina.com.cn/api/roll/get?pageid=164&lid=1693&num=10&page=1":{
+            "xpath": 'json',
+            "dateXpath": 'ctime',
+            "titleXpath": 'title',
+            "urlXpath": 'url',
+            "replaceUrl": (None, None)
+        }
+    },
+    "新浪财经（财经）":{
+        "http://feed.mix.sina.com.cn/api/roll/get?pageid=155&lid=1686&num=10&page=1": {
+            "xpath": 'json',
+            "dateXpath": 'ctime',
+            "titleXpath": 'title',
+            "urlXpath": 'url',
+            "replaceUrl": (None, None)
+        }
+    },
+    "新华网":{
+        "http://www.news.cn/politics/24xsyw.htm":{
+            "xpath": '//ul[@class="dataList"]/li',
+            "dateXpath": './div/span/text()',
+            "titleXpath": './h3/a/text()',
+            "urlXpath": './h3/a/@href',
+            "replaceUrl": (None, None)
+        }
     }
 }
 
@@ -366,38 +536,50 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
     body = r.read()
     if decode:
         body = body.decode(decode)
-    html = etree.HTML(body)
-    sels = html.xpath(xpath)
     results = {}
-    for sel in sels:
-        date,title = None,None
-        try:
-            if dateXpath:
-                date = sel.xpath(dateXpath)[0].strip()
-            if titleXpath:
-                title = sel.xpath(titleXpath)[0].strip()
-                if not title:
-                    title = sel.xpath(titleXpath)[1].strip()
-            if urlXpath:
-                articleUrl = sel.xpath(urlXpath)[0].strip()
-            if "http://" not in articleUrl:
-                if replaceUrl[0]:
-                    articleUrl = articleUrl.replace(replaceUrl[0],replaceUrl[1])
-                else:
-                    articleUrl = replaceUrl[1] + articleUrl
-            if "http://" not in articleUrl:
-                articleUrl = replaceUrl[2] + articleUrl
-            if not date:
-                title, date = title.split("（")
-                date = "（" + date
-            results[title] = {
-                "title":title,
-                "updated_at":datetime.datetime.strftime(datetime.datetime.now(),"%Y-%m-%d %H:%M:%S"),
-                "published_at":date,
-                "url":articleUrl
+    if xpath == "json":
+        body = json.loads(body)
+        for new in body['result']['data']:
+            results[new[titleXpath]] = {
+                "title": new[titleXpath],
+                "updated_at": datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S"),
+                "published_at": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(float(new[dateXpath]))),
+                "url": new[urlXpath]
             }
-        except:
-            pass
+    else:
+        html = etree.HTML(body)
+        sels = html.xpath(xpath)
+        for sel in sels:
+            date, title = None, None
+            try:
+                if dateXpath:
+                    date = sel.xpath(dateXpath)[0].strip()
+                if titleXpath:
+                    title = sel.xpath(titleXpath)[0].strip()
+                    if not title:
+                        title = sel.xpath(titleXpath)[1].strip()
+                if urlXpath:
+                    articleUrl = sel.xpath(urlXpath)[0].strip()
+                if "http://" not in articleUrl:
+                    if replaceUrl[0]:
+                        articleUrl = articleUrl.replace(replaceUrl[0], replaceUrl[1])
+                    else:
+                        articleUrl = replaceUrl[1] + articleUrl
+                if "http://" not in articleUrl:
+                    articleUrl = replaceUrl[2] + articleUrl
+                if not date:
+                    title, date = title.split("（")
+                    date = "（" + date
+                print date, title, articleUrl
+                results[title] = {
+                    "title": title,
+                    "updated_at": datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S"),
+                    "published_at": date,
+                    "url": articleUrl
+                }
+            except Exception, ex:
+                print ex
+                pass
     return results
 
 
