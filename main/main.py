@@ -33,10 +33,9 @@ class MainGUI(tk.Tk):
         self.wait_window(pw)
         return
 
-    def onDBClick(self, event):
+    def onDBClick(self, event=None):
         if self.tree.selection():
-            index = self.listbox.curselection()
-            data_source_key = self.listbox.get(index[0])
+            data_source_key = self.current_listbox_selected
             item = self.tree.selection()[0]
             values = self.tree.item(item, "values")
             title = values[0]
@@ -47,8 +46,26 @@ class MainGUI(tk.Tk):
             values_list = []
             keys = data.keys()
             for key in keys:
-                values_list.append(data[key])
+                value = data[key]
+                if isinstance(value, dict):
+                    values_list.append(value)
             self.new_tree(values_list)
+            readed_num = 0
+            if data.get('ratio', None):
+                total = len(data) - 1
+            else:
+                total = len(data)
+            for item in data:
+                value = data[item]
+                if isinstance(value, dict):
+                    if value.get('tag', None):
+                        readed_num += 1
+            unread_num = total - readed_num
+            ratio = '[{}/{}]'.format(unread_num, readed_num)
+            data['ratio'] = ratio
+            self.data_source[data_source_key] = data
+            json.dump(self.data_source, open('data.json', 'w'))
+            self.refresh_listbox()
             json.dump(self.data_source, open('data.json', 'w'))
 
     def new_tree(self, values_list):
@@ -57,7 +74,7 @@ class MainGUI(tk.Tk):
             self.tree.delete(item)
         i = 1
         for value in values_list:
-            if value.get('tag'):
+            if value.get('tag', None):
                 self.tree.insert('', i, values=(value.get('title', ''),
                                                 value.get('published_at', ''),
                                                 value.get('updated_at', '')),
@@ -69,14 +86,15 @@ class MainGUI(tk.Tk):
             i += 1
 
     def on_click_listbox(self, event):
-        index = self.listbox.curselection()
-        if index:
-            key = self.listbox.get(index[0])
-            values_dict = self.data_source.get(key, [])
-            values_list = []
+        key = self.current_listbox_selected
+        values_dict = self.data_source.get(key, {})
+        values_list = []
+        if values_dict:
             keys = values_dict.keys()
             for key in keys:
-                values_list.append(values_dict[key])
+                value = values_dict[key]
+                if isinstance(value, dict):
+                    values_list.append(value)
             self.new_tree(values_list)
 
     def add_data_source(self, item):
@@ -92,10 +110,8 @@ class MainGUI(tk.Tk):
 
     def start_refresh_selected(self):
         self.progress.set(0)
-        index_tuple = self.listbox.curselection()
-        if index_tuple:
-            index = index_tuple[0]
-            value = self.listbox.get(index)
+        if self.current_listbox_selected:
+            value = self.current_listbox_selected
             try:
                 result = newsCrawl(self, [value])
             except Exception as e:
@@ -112,13 +128,26 @@ class MainGUI(tk.Tk):
                                 new_dict[key1] = prev_dict[key1]
                                 new_dict[key1]['updated_at'] = \
                                     str(datetime.datetime.now().replace(microsecond=0))
-                        self.data_source[key] = new_dict
+                        readed_num = 0
+                        if new_dict.get('ratio', None):
+                            total = len(new_dict) - 1
+                        else:
+                            total = len(new_dict)
+                        for item in new_dict:
+                            value = new_dict[item]
+                            if value.get('tag', None):
+                                readed_num += 1
+                        unread_num = total - readed_num
+                        ratio = '[{}/{}]'.format(unread_num, readed_num)
+                        self.data_source[key]['ratio'] = ratio
                 try:
                     json.dump(self.data_source, open('data.json', 'w'))
                     self.on_click_listbox(1)
                 except Exception as e:
+                    print('error:', e)
                     showerror(title='错误❌', message='未知异常，请联系开发人员')
                 else:
+                    self.refresh_listbox()
                     showinfo(title='提示✅', message='更新成功！')
 
     def start_refresh_all(self, auto=None):
@@ -145,7 +174,19 @@ class MainGUI(tk.Tk):
                             new_dict[key1]['updated_at'] = \
                                 str(datetime.datetime.now().replace(microsecond=0))
                             self.new_list.append(new_dict[key1])
+                    readed_num = 0
+                    if new_dict.get('ratio', None):
+                        total = len(new_dict) - 1
+                    else:
+                        total = len(new_dict)
+                    for item in new_dict:
+                        value = new_dict[item]
+                        if value.get('tag', None):
+                            readed_num += 1
+                    unread_num = total - readed_num
+                    ratio = '[{}/{}]'.format(unread_num, readed_num)
                     self.data_source[key] = new_dict
+                    self.data_source[key]['ratio'] = ratio
             try:
                 json.dump(result, open('data.json', 'w'))
                 self.on_click_listbox(1)
@@ -154,6 +195,7 @@ class MainGUI(tk.Tk):
                 showerror(title='错误❌', message='未知异常，请联系开发人员')
                 raise Exception()
             else:
+                self.refresh_listbox()
                 if auto:
                     if self.new_list:
                         self.popup_new_contents()
@@ -184,17 +226,77 @@ class MainGUI(tk.Tk):
 
     def search(self):
         keyword = self.keywordEntry.get()
-        index = self.listbox.curselection()
-        if index:
-            key = self.listbox.get(index[0])
+        key = self.current_listbox_selected
+        if key:
             values_dict = self.data_source.get(key, [])
             values_list = []
             keys = values_dict.keys()
             for key in keys:
-                title = values_dict[key]['title']
-                if keyword in title:
-                    values_list.append(values_dict[key])
+                if isinstance(values_dict[key], dict):
+                    title = values_dict[key]['title']
+                    if keyword in title:
+                        values_list.append(values_dict[key])
             self.new_tree(values_list)
+
+    def rightKey(self, event):
+        try:
+            self.menubar.post(event.x_root, event.y_root)
+        except:
+            pass
+
+    def mark_read(self, event=None):
+        if self.tree.selection():
+            data_source_key = self.current_listbox_selected
+            items = self.tree.selection()
+            data = self.data_source.get(data_source_key)
+            for item in items:
+                values = self.tree.item(item, "values")
+                title = values[0]
+                data[title]['tag'] = 'clicked'
+            values_list = []
+            keys = data.keys()
+            for key in keys:
+                value = data[key]
+                if isinstance(value, dict):
+                    values_list.append(data[key])
+            self.new_tree(values_list)
+
+            readed_num = 0
+            if data.get('ratio', None):
+                total = len(data) - 1
+            else:
+                total = len(data)
+            for item in data:
+                value = data[item]
+                if isinstance(value, dict):
+                    if value.get('tag', None):
+                        readed_num += 1
+            unread_num = total - readed_num
+            ratio = '[{}/{}]'.format(unread_num, readed_num)
+            data['ratio'] = ratio
+            self.data_source[data_source_key] = data
+            json.dump(self.data_source, open('data.json', 'w'))
+            self.refresh_listbox()
+
+    @property
+    def current_listbox_selected(self):
+        index = self.listbox.curselection()
+        key = None
+        if index:
+            key = self.listbox.get(index[0]).split(' ')[0]
+        return key
+
+    def refresh_listbox(self):
+        index = self.listbox.curselection()
+        data_source = self.get_data_source()
+        self.data_source_keys = data_source.keys()
+        self.listbox.delete(0, END)
+        for key in self.data_source_keys:
+            value = self.data_source[key]
+            ratio = value.get('ratio', '')
+            new_key = key + '   ' + ratio
+            self.listbox.insert(END, new_key)
+        self.listbox.select_set(index)
 
     def __init__(self):
         super().__init__()
@@ -213,8 +315,11 @@ class MainGUI(tk.Tk):
         scrolly.pack(side=RIGHT, fill=Y)
         self.listbox = Listbox(dataFrame, selectmode=BROWSE, width=20,
                                height=30, yscrollcommand=scrolly.set)
-        for value in self.data_source_keys:
-            self.listbox.insert(END, value)
+        for key in self.data_source_keys:
+            value = self.data_source[key]
+            ratio = value.get('ratio', '')
+            new_key = key + '   ' + ratio
+            self.listbox.insert(END, new_key)
         self.listbox.bind('<ButtonRelease-1>', self.on_click_listbox)
         self.listbox.pack(side=LEFT)
         scrolly.config(command=self.listbox.yview)
@@ -225,7 +330,6 @@ class MainGUI(tk.Tk):
         self.keywordEntry = Entry(list_search_frame)
         self.keywordEntry.pack(side=LEFT)
         Button(list_search_frame, text='搜索', command=self.search, padx=20).pack(side=LEFT, padx=50)
-        # Label(list_show_frame, text='数据列表', pady=10).grid(row=1, column=0)
         self.tree = ttk.Treeview(list_show_frame, show='headings', selectmode='extended',
                                  columns=('col1', 'col2', 'col3'), height=28)
         self.tree.column('col1', width=400, anchor='center')
@@ -242,6 +346,12 @@ class MainGUI(tk.Tk):
         ysb.grid(row=2, column=1, sticky='ns')
         xsb.grid(row=3, column=0, sticky='ew')
         self.tree.bind("<Double-1>", self.onDBClick)
+        self.tree.bind("<Button-3>", self.rightKey)
+        self.tree.bind("<Shift-A>", self.mark_read)
+        self.menubar = Menu(self.tree, tearoff=False)
+        self.menubar.add_command(label='打开', command=self.onDBClick)
+        self.menubar.add_command(label='标记已读', command=self.mark_read)
+
         list_search_frame.pack(side=TOP)
         list_show_frame.pack(side=BOTTOM)
         listFrame.pack(side=RIGHT)
@@ -358,12 +468,18 @@ class ShowNewSitesDialog(tk.Toplevel):
         self.listbox.pack(side=LEFT, padx=10, pady=10)
         scrolly.config(command=self.listbox.yview)
 
-    def on_click_listbox(self, event):
+    @property
+    def current_listbox_selected(self):
         index = self.listbox.curselection()
+        key = None
         if index:
-            key = self.listbox.get(index[0])
+            key = self.listbox.get(index[0]).split(' ')[0]
+        return key
+
+    def on_click_listbox(self, event):
+        key = self.current_listbox_selected
+        if key:
             for item in self.new_list:
-                print('item:', item)
                 if item['title'] == key:
                     webbrowser.open(item['url'])
                     break
