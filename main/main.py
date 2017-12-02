@@ -28,6 +28,11 @@ class MainGUI(tk.Tk):
         self.wait_window(pw)
         return
 
+    def color_config(self):
+        pw = ColorConfigDialog(self)
+        self.wait_window(pw)
+        return
+
     def popup_new_contents(self):
         pw = ShowNewSitesDialog(self)
         self.wait_window(pw)
@@ -82,7 +87,7 @@ class MainGUI(tk.Tk):
             else:
                 self.tree.insert('', i, values=(value.get('title', ''),
                                                 value.get('published_at', ''),
-                                                value.get('updated_at', '')))
+                                                value.get('updated_at', '')),)
             i += 1
 
     def on_click_listbox(self, event):
@@ -115,7 +120,7 @@ class MainGUI(tk.Tk):
             try:
                 result = newsCrawl(self, [value])
             except Exception as e:
-                showerror(title='错误❌', message='网络异常，更新失败')
+                self.start_refresh_selected()
             else:
                 keys = result.keys()
                 for key in keys:
@@ -148,7 +153,6 @@ class MainGUI(tk.Tk):
                     showerror(title='错误❌', message='未知异常，请联系开发人员')
                 else:
                     self.refresh_listbox()
-                    showinfo(title='提示✅', message='更新成功！')
 
     def start_refresh_all(self, auto=None):
         self.new_list = []
@@ -156,8 +160,7 @@ class MainGUI(tk.Tk):
             result = newsCrawl(self)
         except Exception as e:
             print('error:', e)
-            showerror(title='错误❌', message='网络不给力，请重试或尝试单个刷新')
-            raise Exception()
+            self.start_refresh_all(auto=auto)
         else:
             keys = result.keys()
             for key in keys:
@@ -199,8 +202,8 @@ class MainGUI(tk.Tk):
                 if auto:
                     if self.new_list:
                         self.popup_new_contents()
-                else:
-                    showinfo(title='提示✅', message='更新成功！')
+                # else:
+                #     showinfo(title='提示✅', message='更新成功！')
 
     def refresh_all(self):
         self.progress.set(0)
@@ -224,7 +227,7 @@ class MainGUI(tk.Tk):
                         pass
                     time.sleep(time_refresh)
 
-    def search(self):
+    def search(self, event=None):
         keyword = self.keywordEntry.get()
         key = self.current_listbox_selected
         if key:
@@ -304,17 +307,18 @@ class MainGUI(tk.Tk):
         self.title('news easier')
         self.geometry('+100+100')
         self.minsize(400, 400)
-        mainFrame = Frame(self)
-        dataFrame = Frame(mainFrame)
-        listFrame = Frame(mainFrame)
-        lb = Label(dataFrame, text='数据源', pady=10, padx=50)
-        lb.pack(side=TOP, anchor=W)
+        self.font_color = 'yellow'
+        self.mainFrame = Frame(self, bg=self.font_color)
+        self.dataFrame = Frame(self.mainFrame, bg=self.font_color)
+        self.listFrame = Frame(self.mainFrame, bg=self.font_color)
+        self.data_source_label = Label(self.dataFrame, text='数据源', pady=10, padx=50, bg=self.font_color)
+        self.data_source_label.pack(side=TOP, anchor=W)
         self.data_source = self.get_data_source()
         self.data_source_keys = self.data_source.keys()
-        scrolly = Scrollbar(dataFrame)
+        scrolly = Scrollbar(self.dataFrame)
         scrolly.pack(side=RIGHT, fill=Y)
-        self.listbox = Listbox(dataFrame, selectmode=BROWSE, width=20,
-                               height=30, yscrollcommand=scrolly.set)
+        self.listbox = Listbox(self.dataFrame, selectmode=BROWSE, width=20,
+                               height=30, yscrollcommand=scrolly.set, bg=self.font_color)
         for key in self.data_source_keys:
             value = self.data_source[key]
             ratio = value.get('ratio', '')
@@ -323,13 +327,15 @@ class MainGUI(tk.Tk):
         self.listbox.bind('<ButtonRelease-1>', self.on_click_listbox)
         self.listbox.pack(side=LEFT)
         scrolly.config(command=self.listbox.yview)
-        dataFrame.pack(side=LEFT, anchor=N, padx=41)
-        list_search_frame = Frame(listFrame)
-        list_show_frame = Frame(listFrame)
-        Label(list_search_frame, text='关键字:', pady=10).pack(side=LEFT)
-        self.keywordEntry = Entry(list_search_frame)
+        self.dataFrame.pack(side=LEFT, anchor=N, padx=41)
+        self.list_search_frame = Frame(self.listFrame, bg=self.font_color)
+        list_show_frame = Frame(self.listFrame)
+        self.keyword_label = Label(self.list_search_frame, text='关键字:', pady=10, bg=self.font_color)
+        self.keyword_label.pack(side=LEFT)
+        self.keywordEntry = Entry(self.list_search_frame)
+        self.keywordEntry.bind('<Return>', self.search)
         self.keywordEntry.pack(side=LEFT)
-        Button(list_search_frame, text='搜索', command=self.search, padx=20).pack(side=LEFT, padx=50)
+        Button(self.list_search_frame, text='搜索', command=self.search, padx=20, bg=self.font_color, fg='blue').pack(side=LEFT, padx=50)
         self.tree = ttk.Treeview(list_show_frame, show='headings', selectmode='extended',
                                  columns=('col1', 'col2', 'col3'), height=28)
         self.tree.column('col1', width=400, anchor='center')
@@ -338,8 +344,8 @@ class MainGUI(tk.Tk):
         self.tree.heading('col1', text='标题')
         self.tree.heading('col2', text='发布时间')
         self.tree.heading('col3', text='更新时间')
-        ysb = ttk.Scrollbar(list_show_frame, orient='vertical', command=self.tree.yview)
-        xsb = ttk.Scrollbar(list_show_frame, orient='horizontal', command=self.tree.xview)
+        ysb = ttk.Scrollbar(list_show_frame, orient='vertical', command=self.tree.yview, bg=self.font_color)
+        xsb = ttk.Scrollbar(list_show_frame, orient='horizontal', command=self.tree.xview, bg=self.font_color)
         self.tree.configure(yscroll=ysb.set, xscroll=xsb.set)
         self.tree.tag_configure('clicked', background='LightGrey')
         self.tree.grid(row=2, column=0)
@@ -352,21 +358,22 @@ class MainGUI(tk.Tk):
         self.menubar.add_command(label='打开', command=self.onDBClick)
         self.menubar.add_command(label='标记已读', command=self.mark_read)
 
-        list_search_frame.pack(side=TOP)
+        self.list_search_frame.pack(side=TOP)
         list_show_frame.pack(side=BOTTOM)
-        listFrame.pack(side=RIGHT)
-        refreshFrame = Frame(dataFrame)
-        Button(refreshFrame, text="刷新选中", command=self.refresh).pack(padx=10, pady=20)
-        Button(refreshFrame, text="刷新全部", command=self.refresh_all).pack(padx=10, pady=20)
-        progress_frame = Frame(refreshFrame)
-        Label(progress_frame, text='进度条:', width=8).pack(side=LEFT)
-        self.progress = Scale(progress_frame, from_=0, to=100, resolution=1,
-                              orient=HORIZONTAL, troughcolor='green')
+        self.listFrame.pack(side=RIGHT)
+        self.refreshFrame = Frame(self.dataFrame, bg=self.font_color)
+        Button(self.refreshFrame, text="刷新选中", command=self.refresh, bg=self.font_color, fg=self.font_color).pack(padx=10, pady=20)
+        Button(self.refreshFrame, text="刷新全部", command=self.refresh_all, bg=self.font_color).pack(padx=10, pady=20)
+        self.progress_frame = Frame(self.refreshFrame, bg=self.font_color)
+        self.progress_label = Label(self.progress_frame, text='进度条:', width=8, bg=self.font_color)
+        self.progress_label.pack(side=LEFT)
+        self.progress = Scale(self.progress_frame, from_=0, to=100, resolution=1,
+                              orient=HORIZONTAL, troughcolor='green', bg=self.font_color)
         self.progress.pack(side=LEFT)
-        progress_frame.pack(padx=10, pady=20)
-        refreshFrame.pack(side=LEFT)
+        self.progress_frame.pack(padx=10, pady=20)
+        self.refreshFrame.pack(side=LEFT)
 
-        mainFrame.pack()
+        self.mainFrame.pack()
         top = Menu(self, font=("黑体", 12, "bold"))
         self.config(menu=top)
         file = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
@@ -374,6 +381,7 @@ class MainGUI(tk.Tk):
         file.add_command(label='收藏管理', command=self.site_manage, underline=0)
         file.add_separator()
         file.add_command(label='刷新设置', command=self.refresh_config, underline=0)
+        file.add_command(label='颜色设置', command=self.color_config, underline=0)
         file.add_separator()
         file.add_command(label='退出', command=sys.exit, underline=0)
         top.add_cascade(label='文件', menu=file, underline=0)
@@ -444,6 +452,49 @@ class RefreshConfigDialog(tk.Toplevel):
             data = json.load(open('refresh_time.json'))
             data['time'] = refresh_time
             json.dump(data, open('refresh_time.json', 'w'))
+        self.destroy()
+
+    def cancel(self):
+        self.destroy()
+
+
+class ColorConfigDialog(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__()
+        self.title('背景颜色设置')
+        self.parent = parent
+        self.color = 'yellow'
+        mainFrame = Frame(self)
+        mainFrame.pack(fill="x")
+        colorFrame = Frame(mainFrame)
+        Label(colorFrame, text='背景颜色：', width=8).pack(side=LEFT)
+        colorFrame.pack(pady=20)
+        self.color_var = tk.StringVar()
+        numberChosen = ttk.Combobox(colorFrame, width=12, textvariable=self.color_var)
+        numberChosen['values'] = ('白色', '黄色', '红色', '蓝色')  # 设置下拉列表的值
+        numberChosen.pack(pady=20)  # 设置其在界面中出现的位置  column代表列   row 代表行
+        numberChosen.current(0)
+        buttonFrame = Frame(mainFrame)
+        Button(buttonFrame, text="确定", command=self.ok).pack(side=LEFT, padx=5)
+        Button(buttonFrame, text="取消", command=self.cancel).pack(side=LEFT, padx=5)
+        buttonFrame.pack(padx=100)
+
+    def ok(self):
+        map = {'白色': 'white', '黄色': 'yellow', '红色': 'red',
+               '蓝色': 'blue'}
+        color = self.color_var.get()
+        en_color = map[color]
+        self.parent.mainFrame.configure(bg=en_color)
+        self.parent.dataFrame.configure(bg=en_color)
+        self.parent.listFrame.configure(bg=en_color)
+        self.parent.data_source_label.configure(bg=en_color)
+        self.parent.listbox.configure(bg=en_color)
+        self.parent.list_search_frame.configure(bg=en_color)
+        self.parent.keyword_label.configure(bg=en_color)
+        self.parent.refreshFrame.configure(bg=en_color)
+        self.parent.progress_frame.configure(bg=en_color)
+        self.parent.progress.configure(bg=en_color)
+        self.parent.progress_label.configure(bg=en_color)
         self.destroy()
 
     def cancel(self):
@@ -531,13 +582,9 @@ class PopupSiteManageDialog(tk.Toplevel):
         data = json.load(open('site_manage.json'))
         site_data_list = data['site']
         index = self.site_Manage_listbox.curselection()
-        print(index)
         key = self.site_Manage_listbox.get(index[0])
-        print(key)
         for site in site_data_list:
-            print('site:', site)
             value = site.get(key, None)
-            print('value:', value)
             if value:
                 webbrowser.open(value)
                 break

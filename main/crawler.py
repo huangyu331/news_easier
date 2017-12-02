@@ -570,15 +570,14 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
                 if not date:
                     title, date = title.split("（")
                     date = "（" + date
-                print date, title, articleUrl
                 results[title] = {
                     "title": title,
                     "updated_at": datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S"),
                     "published_at": date,
                     "url": articleUrl
                 }
-            except Exception, ex:
-                print ex
+            except Exception as ex:
+                print(ex)
                 pass
     return results
 
@@ -601,7 +600,7 @@ def newsCrawl(widget, needItem=None):
                                          conf['titleXpath'], conf['urlXpath'],
                                          conf['replaceUrl'])
                     except Exception as e:
-                        print('error', e)
+                        raise Exception()
                     else:
                         result[key].update(result_get)
         else:
@@ -620,7 +619,6 @@ def newsCrawl1(needItem=None):
     total_category_num = len(config)
     tem_index = 1
     for key, item in config.items():
-        print('key:', key)
         result[key] = {}
         if needItem:
             total_category_num = len(needItem)
