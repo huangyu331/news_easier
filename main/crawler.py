@@ -629,6 +629,34 @@ def crawler(url, conf):
                 pass
     return results
 
+def newsCrawl(widget, needItem=None):
+    print('begin:', datetime.datetime.now())
+    result = {}
+    total_category_num = len(config.items())
+    tem_index = 1
+    for key, item in config.items():
+        widget.progress.set(int(tem_index / total_category_num * 100))
+        tem_index += 1
+        result[key] = {}
+        if needItem:
+            if key in needItem:
+                for url in item:
+                    conf = item[url]
+                    try:
+                        result_get = crawler(url, conf)
+                    except Exception as e:
+                        raise Exception()
+                    else:
+                        result[key].update(result_get)
+        else:
+            for url in item:
+                conf = item[url]
+                result[key].update(
+                    crawler(url, conf)
+                )
+    print('end:', datetime.datetime.now())
+    return result
+
 def newsCrawl1(needItem=None):
     print('begin:', datetime.datetime.now())
     result = {}
