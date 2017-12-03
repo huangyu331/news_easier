@@ -61,6 +61,39 @@ config = {
             "replaceUrl": (None, "http://www.circ.gov.cn")
         }
     },
+    "银监会":{
+        "http://www.cbrc.gov.cn/chinese/home/docViewPage/110008.html":{
+            "xpath":'//div[@class="xia3"]/table/tr',
+            "dateXpath":'./td[2]/text()',
+            "titleXpath":'./td[1]/a/text()',
+            "urlXpath":'./td[1]/a/@href',
+            "replaceUrl":(None, "http://www.cbrc.gov.cn")
+        }
+    },
+    "科技部":{
+        "http://www.most.gov.cn/xinwzx/xwzx/fbhyg/":{
+            "xpath":'//div[@id="TRS"]/table//tr/td/div/a',
+            "dateXpath":None,
+            "titleXpath":'./text()',
+            "urlXpath":'./@href',
+            "replaceUrl":('./', "http://www.most.gov.cn/xinwzx/xwzx/fbhyg/")
+        },
+        "http://www.most.gov.cn/kjbgz/":{
+            "xpath":'//td[@align="left"]/table//tr/td[2]',
+            "dateXpath":'./text()',
+            "titleXpath":'./a/text()',
+            "urlXpath":'./a/@href',
+            "replaceUrl":('./', "http://www.most.gov.cn/kjbgz/")
+        },
+        "http://www.most.gov.cn/dfkj/dfkjyw/dfzxdt/":{
+            "xpath": '//div[@class="news1"]/ul/li/a',
+            "dateXpath": None,
+            "titleXpath": './text()',
+            "urlXpath": './@href',
+            "replaceUrl": ('../../', "http://www.most.gov.cn/dfkj/"),
+            "splitVal":"("
+        }
+    },
     "国土资源部": {
         "http://www.mlr.gov.cn/xwdt/kyxw/": {
             "xpath": '//table[@id="con"]//tr',
@@ -482,13 +515,19 @@ config = {
         }
     },
     "腾讯财经（实时）":{
-        "http://roll.finance.qq.com/":{
-            "xpath": '//div[@class="mainCon"]/div[3]/ul/li',
+        "http://roll.finance.qq.com/interface/roll.php?cata=&site=finance&date=&page=1&mode=1&of=json": {
+            "xpath": '//ul/li',
             "dateXpath": './span[1]/text()',
             "titleXpath": './a/text()',
             "urlXpath": './a/@href',
-            "replaceUrl": (None, None)
+            "replaceUrl": (None, None),
+            "header": {
+                "Referer": "http://roll.finance.qq.com/"
+            },
+            "type": "jsonxpath",
+            "decode": "gb2312"
         }
+
     },
     "新浪财经（产经）":{
         "http://feed.mix.sina.com.cn/api/roll/get?pageid=164&lid=1693&num=10&page=1":{
@@ -520,15 +559,20 @@ config = {
 }
 
 
-def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None):
-    # r = requests.get(url,)
-    # r.encoding = "utf-8"
-    # coding = r.encoding
-    # print coding
-    # html = etree.HTML(r.text)
-    # r = urllib2.urlopen(url)
+def crawler(url, conf):
+    xpath = conf.get('xpath',None)
+    dateXpath = conf.get('dateXpath',None)
+    titleXpath = conf.get('titleXpath',None)
+    urlXpath = conf.get('urlXpath',None)
+    replaceUrl = conf.get('replaceUrl',None)
+    header = conf.get('header',None)
+    type = conf.get('type', None)
+    decode = conf.get('decode', None)
     req = urllib2.Request(url)
     req.add_header("User-Agent",headers["User-Agent"])
+    if header:
+        for key in header:
+            req.add_header(key,header[key])
     try:
         r = urllib2.urlopen(req, timeout=10)
     except HTTPError as error:
@@ -546,11 +590,15 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
                 "published_at": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(float(new[dateXpath]))),
                 "url": new[urlXpath]
             }
+
     else:
+        if type and type == "jsonxpath":
+            body = json.loads(body)
+            body = body['data']['article_info']
         html = etree.HTML(body)
         sels = html.xpath(xpath)
         for sel in sels:
-            date, title = None, None
+            date,title = None,None
             try:
                 if dateXpath:
                     date = sel.xpath(dateXpath)[0].strip()
@@ -562,55 +610,24 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
                     articleUrl = sel.xpath(urlXpath)[0].strip()
                 if "http://" not in articleUrl:
                     if replaceUrl[0]:
-                        articleUrl = articleUrl.replace(replaceUrl[0], replaceUrl[1])
+                        articleUrl = articleUrl.replace(replaceUrl[0],replaceUrl[1])
                     else:
-                        articleUrl = replaceUrl[1] + articleUrl
+                        articleUrl = replaceUrl[1]  + articleUrl
                 if "http://" not in articleUrl:
                     articleUrl = replaceUrl[2] + articleUrl
-                if not date and dateXpath:
-                    title, date = title.split("（")
-                    date = "（" + date
+                if not date and not dateXpath:
+                    splitVal = conf.get("splitVal","（")
+                    title, date = title.split(splitVal)
+                    date = splitVal + date
                 results[title] = {
-                    "title": title,
-                    "updated_at": datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S"),
-                    "published_at": date,
-                    "url": articleUrl
+                    "title":title,
+                    "updated_at":datetime.datetime.strftime(datetime.datetime.now(),"%Y-%m-%d %H:%M:%S"),
+                    "published_at":date,
+                    "url":articleUrl
                 }
-            except Exception as ex:
+            except:
                 pass
     return results
-
-
-def newsCrawl(widget, needItem=None):
-    print('begin:', datetime.datetime.now())
-    result = {}
-    total_category_num = len(config.items())
-    tem_index = 1
-    for key, item in config.items():
-        widget.progress.set(int(tem_index / total_category_num * 100))
-        tem_index += 1
-        result[key] = {}
-        if needItem:
-            if key in needItem:
-                for url in item:
-                    conf = item[url]
-                    try:
-                        result_get = crawler(url, conf['xpath'], conf['dateXpath'],
-                                         conf['titleXpath'], conf['urlXpath'],
-                                         conf['replaceUrl'])
-                    except Exception as e:
-                        raise Exception()
-                    else:
-                        result[key].update(result_get)
-        else:
-            for url in item:
-                conf = item[url]
-                result[key].update(
-                    crawler(url, conf['xpath'], conf['dateXpath'], conf['titleXpath'], conf['urlXpath'],
-                            conf['replaceUrl'], conf.get("decode",None))
-                )
-    print('end:', datetime.datetime.now())
-    return result
 
 def newsCrawl1(needItem=None):
     print('begin:', datetime.datetime.now())
@@ -624,9 +641,7 @@ def newsCrawl1(needItem=None):
             if key in needItem:
                 for url in item:
                     conf = item[url]
-                    result_get = crawler(url, conf['xpath'], conf['dateXpath'],
-                                     conf['titleXpath'], conf['urlXpath'],
-                                     conf['replaceUrl'])
+                    result_get = crawler(url, conf)
                     result[key].update(result_get)
                 # widget.progress.set(int(tem_index / total_category_num) * 100)
                 # tem_index += 1
@@ -634,8 +649,7 @@ def newsCrawl1(needItem=None):
             for url in item:
                 conf = item[url]
                 result[key].update(
-                    crawler(url, conf['xpath'], conf['dateXpath'], conf['titleXpath'], conf['urlXpath'],
-                            conf['replaceUrl'], conf.get("decode",None))
+                    crawler(url, conf)
                 )
             # widget.progress.set(int(tem_index / total_category_num) * 100)
             # tem_index += 1
