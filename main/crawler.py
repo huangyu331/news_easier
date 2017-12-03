@@ -567,7 +567,7 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
                         articleUrl = replaceUrl[1] + articleUrl
                 if "http://" not in articleUrl:
                     articleUrl = replaceUrl[2] + articleUrl
-                if not date:
+                if not date and dateXpath:
                     title, date = title.split("（")
                     date = "（" + date
                 results[title] = {
