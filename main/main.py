@@ -120,6 +120,7 @@ class MainGUI(tk.Tk):
             try:
                 result = newsCrawl(self, [value])
             except Exception as e:
+                time.sleep(5)
                 self.start_refresh_selected()
             else:
                 keys = result.keys()
@@ -159,7 +160,7 @@ class MainGUI(tk.Tk):
         try:
             result = newsCrawl(self)
         except Exception as e:
-            print('error:', e)
+            time.sleep(5)
             self.start_refresh_all(auto=auto)
         else:
             keys = result.keys()
@@ -222,7 +223,9 @@ class MainGUI(tk.Tk):
                     time_refresh = int(time_refresh) * 60
                     self.progress.set(0)
                     try:
-                        self.start_refresh_all(True)
+                        t = threading.Thread(target=self.start_refresh_all, args=(True,))
+                        # self.start_refresh_all(True)
+                        t.start()
                     except Exception:
                         pass
                     time.sleep(time_refresh)
@@ -299,7 +302,8 @@ class MainGUI(tk.Tk):
             ratio = value.get('ratio', '')
             new_key = key + '   ' + ratio
             self.listbox.insert(END, new_key)
-        self.listbox.select_set(index)
+        if index:
+            self.listbox.select_set(index)
 
     def __init__(self):
         super().__init__()
@@ -307,7 +311,7 @@ class MainGUI(tk.Tk):
         self.title('news easier')
         self.geometry('+100+100')
         self.minsize(400, 400)
-        self.font_color = 'yellow'
+        self.font_color = 'SeaGreen'
         self.mainFrame = Frame(self, bg=self.font_color)
         self.dataFrame = Frame(self.mainFrame, bg=self.font_color)
         self.listFrame = Frame(self.mainFrame, bg=self.font_color)
@@ -471,7 +475,7 @@ class ColorConfigDialog(tk.Toplevel):
         colorFrame.pack(pady=20)
         self.color_var = tk.StringVar()
         numberChosen = ttk.Combobox(colorFrame, width=12, textvariable=self.color_var)
-        numberChosen['values'] = ('白色', '黄色', '红色', '蓝色')  # 设置下拉列表的值
+        numberChosen['values'] = ('白色', '黄色', '红色', '蓝色', '棕色', '海洋绿', '紫色')  # 设置下拉列表的值
         numberChosen.pack(pady=20)  # 设置其在界面中出现的位置  column代表列   row 代表行
         numberChosen.current(0)
         buttonFrame = Frame(mainFrame)
@@ -481,7 +485,7 @@ class ColorConfigDialog(tk.Toplevel):
 
     def ok(self):
         map = {'白色': 'white', '黄色': 'yellow', '红色': 'red',
-               '蓝色': 'blue'}
+               '蓝色': 'blue', '棕色': 'Brown', '海洋绿': 'SeaGreen', '紫色': 'Purple'}
         color = self.color_var.get()
         en_color = map[color]
         self.parent.mainFrame.configure(bg=en_color)

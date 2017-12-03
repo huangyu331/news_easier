@@ -577,7 +577,6 @@ def crawler(url, xpath, dateXpath, titleXpath, urlXpath, replaceUrl, decode=None
                     "url": articleUrl
                 }
             except Exception as ex:
-                print(ex)
                 pass
     return results
 
@@ -646,7 +645,7 @@ def newsCrawl1(needItem=None):
 
 if __name__ == "__main__":
     needItem = ["国务院","证监会","保监会","国土资源部","国资委","财政部","能源局","铁道部","中科院","工信部","商务部","旅游局","农业部","社科院","城乡建设部","交通运输部","民政部","国防部","教育部","监察部","司法部","文化部","统计局","体育总局","食药监局","网易科技","环球科技（5G）"]
-    result = newsCrawl1(needItem)
+    result = newsCrawl1()
     json.dump(result, open('data.json', 'w'))
 
 
