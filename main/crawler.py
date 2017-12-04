@@ -225,6 +225,24 @@ config = {
               "replaceUrl": ("./", "http://www.moa.gov.cn/zwllm/zwdt/")
           }
     },
+    "人社部":{
+            "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/buneiyaowen/": {
+                "xpath": '//div[@class="serviceMainListTabCon"]',
+                "dateXpath": './div[3]/span/text()',
+                "titleXpath": './div/span/a/@title',
+                "urlXpath": './div/span/a/@href',
+                "replaceUrl": (
+                "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
+            },
+            "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/": {
+                "xpath": '//div[@class="serviceMainListTabCon"]',
+                "dateXpath": './div[3]/span/text()',
+                "titleXpath": './div/span/a/@title',
+                "urlXpath": './div/span/a/@href',
+                "replaceUrl": (
+                "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
+            }
+        },
 
     "社科院":{
         "http://cass.cssn.cn/yaowen/": {
