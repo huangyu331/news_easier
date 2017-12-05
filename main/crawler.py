@@ -70,6 +70,22 @@ config = {
             "replaceUrl":(None, "http://www.cbrc.gov.cn")
         }
     },
+    "环保部":{
+        "http://www.mep.gov.cn/gkml/73/75/index_835.htm":{
+            "xpath": '//div[@id="documentContainer"]/div',
+            "dateXpath": './li[4]/@title',
+            "titleXpath": './li/div/a/text()',
+            "urlXpath": './li/div/a/@href',
+            "replaceUrl": ("../../", "http://www.mep.gov.cn/gkml/")
+        },
+        "http://www.mep.gov.cn/gkml/index_839.htm":{
+            "xpath": '//div[@id="documentContainer"]/div',
+            "dateXpath": './li[4]/@title',
+            "titleXpath": './li/div/a/text()',
+            "urlXpath": './li/div/a/@href',
+            "replaceUrl": ("./", "http://www.mep.gov.cn/gkml/")
+        }
+    },
     "科技部":{
         "http://www.most.gov.cn/xinwzx/xwzx/fbhyg/":{
             "xpath":'//div[@id="TRS"]/table//tr/td/div/a',
@@ -226,23 +242,23 @@ config = {
           }
     },
     "人社部":{
-            "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/buneiyaowen/": {
-                "xpath": '//div[@class="serviceMainListTabCon"]',
-                "dateXpath": './div[3]/span/text()',
-                "titleXpath": './div/span/a/@title',
-                "urlXpath": './div/span/a/@href',
-                "replaceUrl": (
-                "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
-            },
-            "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/": {
-                "xpath": '//div[@class="serviceMainListTabCon"]',
-                "dateXpath": './div[3]/span/text()',
-                "titleXpath": './div/span/a/@title',
-                "urlXpath": './div/span/a/@href',
-                "replaceUrl": (
-                "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
-            }
+        "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/buneiyaowen/": {
+            "xpath": '//div[@class="serviceMainListTabCon"]',
+            "dateXpath": './div[3]/span/text()',
+            "titleXpath": './div/span/a/@title',
+            "urlXpath": './div/span/a/@href',
+            "replaceUrl": (
+            "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
         },
+        "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/": {
+            "xpath": '//div[@class="serviceMainListTabCon"]',
+            "dateXpath": './div[3]/span/text()',
+            "titleXpath": './div/span/a/@title',
+            "urlXpath": './div/span/a/@href',
+            "replaceUrl": (
+            "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
+        }
+    },
 
     "社科院":{
         "http://cass.cssn.cn/yaowen/": {
