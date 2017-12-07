@@ -106,7 +106,8 @@ config = {
             "dateXpath":None,
             "titleXpath":'./text()',
             "urlXpath":'./@href',
-            "replaceUrl":('./', "http://www.most.gov.cn/xinwzx/xwzx/fbhyg/")
+            "replaceUrl":('./', "http://www.most.gov.cn/xinwzx/xwzx/fbhyg/"),
+            "splitVal":"("
         },
         "http://www.most.gov.cn/kjbgz/":{
             "xpath":'//td[@align="left"]/table//tr/td[2]',
