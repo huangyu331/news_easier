@@ -276,18 +276,28 @@ config = {
 
     "社科院":{
         "http://cass.cssn.cn/yaowen/": {
-          "xpath": '//div[@class="con"]/div/ul/li',
-          "dateXpath": None,
-          "titleXpath": './a/text()',
-          "urlXpath": './a/@href',
-          "replaceUrl": ("./", "http://cass.cssn.cn/yaowen/")
+            "xpath": '//div[@class="con"]/div/ul/li',
+            "dateXpath": None,
+            "titleXpath": './a/text()',
+            "urlXpath": './a/@href',
+            "replaceUrl": ("./", "http://cass.cssn.cn/yaowen/"),
+            "splitVal": "",
+            "conf":{
+                "xpath": '//div[@class="con"]/div/h1',
+                "dateXpath": None,
+                "titleXpath": './a/text()',
+                "urlXpath": './a/@href',
+                "replaceUrl": ("./", "http://cass.cssn.cn/yaowen/"),
+                "splitVal": ""
+            }
         },
         "http://cass.cssn.cn/gundong/": {
-          "xpath": '//div[@class="columnPagemain"]/div/ul/li',
-          "dateXpath": None,
-          "titleXpath": './a/text()',
-          "urlXpath": './a/@href',
-          "replaceUrl": ("../", 'http://cass.cssn.cn/')
+            "xpath": '//div[@class="columnPagemain"]/div/ul/li',
+            "dateXpath": None,
+            "titleXpath": './a/text()',
+            "urlXpath": './a/@href',
+            "replaceUrl": ("../", 'http://cass.cssn.cn/'),
+            "splitVal": ""
         }
     },
 
@@ -607,7 +617,7 @@ config = {
 }
 
 
-def crawler(url, conf):
+def crawler(url, conf, body=None):
     xpath = conf.get('xpath',None)
     dateXpath = conf.get('dateXpath',None)
     titleXpath = conf.get('titleXpath',None)
@@ -616,19 +626,22 @@ def crawler(url, conf):
     header = conf.get('header',None)
     type = conf.get('type', None)
     decode = conf.get('decode', None)
-    req = urllib2.Request(url)
-    req.add_header("User-Agent",headers["User-Agent"])
-    if header:
-        for key in header:
-            req.add_header(key,header[key])
-    try:
-        r = urllib2.urlopen(req, timeout=10)
-    except HTTPError as error:
-        r = urllib2.urlopen(req, timeout=10)
-    body = r.read()
-    if decode:
-        body = body.decode(decode)
+    if not body:
+        req = urllib2.Request(url)
+        req.add_header("User-Agent",headers["User-Agent"])
+        if header:
+            for key in header:
+                req.add_header(key,header[key])
+        try:
+            r = urllib2.urlopen(req, timeout=10)
+        except HTTPError as error:
+            r = urllib2.urlopen(req, timeout=10)
+        body = r.read()
+        if decode:
+            body = body.decode(decode)
     results = {}
+    if "conf" in conf:
+        results.update(crawler(url, conf['conf'], body))
     if xpath == "json":
         body = json.loads(body)
         for new in body['result']['data']:
@@ -665,7 +678,7 @@ def crawler(url, conf):
                     articleUrl = replaceUrl[2] + articleUrl
                 if not date and not dateXpath:
                     splitVal = conf.get("splitVal","（")
-                    title, date = title.split(splitVal)
+                    date = title.split(splitVal)[-1]
                     date = splitVal + date
                 results[title] = {
                     "title":title,
