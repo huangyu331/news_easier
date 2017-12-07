@@ -34,9 +34,17 @@ class MainGUI(tk.Tk):
         return
 
     def popup_new_contents(self):
-        pw = ShowNewSitesDialog(self)
-        self.wait_window(pw)
-        return
+        if hasattr(self, 'pw'):
+            try:
+                self.pw.update_content()
+            except Exception:
+                self.pw = ShowNewSitesDialog(self)
+                self.wait_window(self.pw)
+                return
+        else:
+            self.pw = ShowNewSitesDialog(self)
+            self.wait_window(self.pw)
+            return
 
     def onDBClick(self, event=None):
         if self.tree.selection():
@@ -54,6 +62,7 @@ class MainGUI(tk.Tk):
                 value = data[key]
                 if isinstance(value, dict):
                     values_list.append(value)
+            values_list.sort(key=lambda x: x['published_at'], reverse=True)
             self.new_tree(values_list)
             readed_num = 0
             if data.get('ratio', None):
@@ -81,26 +90,33 @@ class MainGUI(tk.Tk):
         for value in values_list:
             if value.get('tag', None):
                 self.tree.insert('', i, values=(value.get('title', ''),
-                                                value.get('published_at', ''),
+                                                value.get('published_at', '').strip().strip('()').strip('[]'),
                                                 value.get('updated_at', '')),
                                  tags=value.get('tag'))
             else:
                 self.tree.insert('', i, values=(value.get('title', ''),
-                                                value.get('published_at', ''),
+                                                value.get('published_at', '').strip().strip('()').strip('[]'),
                                                 value.get('updated_at', '')),)
             i += 1
 
     def on_click_listbox(self, event):
+        index = self.listbox.curselection()
+        key = None
+        if index:
+            key = self.listbox.get(index[0]).split(' ')[0]
+            self.current_listbox_selected = key
         key = self.current_listbox_selected
-        values_dict = self.data_source.get(key, {})
-        values_list = []
-        if values_dict:
-            keys = values_dict.keys()
-            for key in keys:
-                value = values_dict[key]
-                if isinstance(value, dict):
-                    values_list.append(value)
-            self.new_tree(values_list)
+        if key:
+            values_dict = self.data_source.get(key, {})
+            values_list = []
+            if values_dict:
+                keys = values_dict.keys()
+                for key in keys:
+                    value = values_dict[key]
+                    if isinstance(value, dict):
+                        values_list.append(value)
+                values_list.sort(key=lambda x: x['published_at'], reverse=True)
+                self.new_tree(values_list)
 
     def add_data_source(self, item):
         self.data_source.append(item)
@@ -203,8 +219,6 @@ class MainGUI(tk.Tk):
                 if auto:
                     if self.new_list:
                         self.popup_new_contents()
-                # else:
-                #     showinfo(title='提示✅', message='更新成功！')
 
     def refresh_all(self):
         self.progress.set(0)
@@ -232,17 +246,22 @@ class MainGUI(tk.Tk):
 
     def search(self, event=None):
         keyword = self.keywordEntry.get()
-        key = self.current_listbox_selected
-        if key:
+        data_source_keys = self.data_source.keys()
+        keys_list = []
+        total_values_dict = dict()
+        for key in data_source_keys:
             values_dict = self.data_source.get(key, [])
-            values_list = []
+            total_values_dict.update(values_dict)
             keys = values_dict.keys()
-            for key in keys:
-                if isinstance(values_dict[key], dict):
-                    title = values_dict[key]['title']
-                    if keyword in title:
-                        values_list.append(values_dict[key])
-            self.new_tree(values_list)
+            keys_list += keys
+        values_list = []
+        for key in keys_list:
+            if isinstance(total_values_dict[key], dict):
+                title = total_values_dict[key]['title']
+                if keyword in title:
+                    values_list.append(total_values_dict[key])
+        values_list.sort(key=lambda x: x['published_at'], reverse=True)
+        self.new_tree(values_list)
 
     def rightKey(self, event):
         try:
@@ -265,6 +284,7 @@ class MainGUI(tk.Tk):
                 value = data[key]
                 if isinstance(value, dict):
                     values_list.append(data[key])
+            values_list.sort(key=lambda x: x['published_at'], reverse=True)
             self.new_tree(values_list)
 
             readed_num = 0
@@ -283,14 +303,6 @@ class MainGUI(tk.Tk):
             self.data_source[data_source_key] = data
             json.dump(self.data_source, open('data.json', 'w'))
             self.refresh_listbox()
-
-    @property
-    def current_listbox_selected(self):
-        index = self.listbox.curselection()
-        key = None
-        if index:
-            key = self.listbox.get(index[0]).split(' ')[0]
-        return key
 
     def refresh_listbox(self):
         index = self.listbox.curselection()
@@ -311,7 +323,8 @@ class MainGUI(tk.Tk):
         self.title('news easier')
         self.geometry('+100+100')
         self.minsize(400, 400)
-        self.font_color = 'SeaGreen'
+        self.font_color = 'white'
+        self.current_listbox_selected = None
         self.mainFrame = Frame(self, bg=self.font_color)
         self.dataFrame = Frame(self.mainFrame, bg=self.font_color)
         self.listFrame = Frame(self.mainFrame, bg=self.font_color)
@@ -339,7 +352,8 @@ class MainGUI(tk.Tk):
         self.keywordEntry = Entry(self.list_search_frame)
         self.keywordEntry.bind('<Return>', self.search)
         self.keywordEntry.pack(side=LEFT)
-        Button(self.list_search_frame, text='搜索', command=self.search, padx=20, bg=self.font_color, fg='blue').pack(side=LEFT, padx=50)
+        a = Button(self.list_search_frame, text='搜索', command=self.search, padx=20, bg=self.font_color, fg='blue')
+        a.pack(side=LEFT, padx=50)
         self.tree = ttk.Treeview(list_show_frame, show='headings', selectmode='extended',
                                  columns=('col1', 'col2', 'col3'), height=28)
         self.tree.column('col1', width=400, anchor='center')
@@ -348,8 +362,8 @@ class MainGUI(tk.Tk):
         self.tree.heading('col1', text='标题')
         self.tree.heading('col2', text='发布时间')
         self.tree.heading('col3', text='更新时间')
-        ysb = ttk.Scrollbar(list_show_frame, orient='vertical', command=self.tree.yview, bg=self.font_color)
-        xsb = ttk.Scrollbar(list_show_frame, orient='horizontal', command=self.tree.xview, bg=self.font_color)
+        ysb = ttk.Scrollbar(list_show_frame, orient='vertical', command=self.tree.yview)
+        xsb = ttk.Scrollbar(list_show_frame, orient='horizontal', command=self.tree.xview)
         self.tree.configure(yscroll=ysb.set, xscroll=xsb.set)
         self.tree.tag_configure('clicked', background='LightGrey')
         self.tree.grid(row=2, column=0)
@@ -454,7 +468,7 @@ class RefreshConfigDialog(tk.Toplevel):
         refresh_time = self.refresh_time_entry.get()
         if refresh_time:
             data = json.load(open('refresh_time.json'))
-            data['time'] = refresh_time
+            data['time'] = float(refresh_time)
             json.dump(data, open('refresh_time.json', 'w'))
         self.destroy()
 
@@ -509,35 +523,34 @@ class ShowNewSitesDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__()
         self.title('最新更新内容')
+        self.parent = parent
         self.new_list = parent.new_list
+        self.current_listbox_selected = None
         mainFrame = Frame(self)
         mainFrame.pack(fill="x")
         scrolly = Scrollbar(mainFrame)
         scrolly.pack(side=RIGHT, fill=Y)
         self.listbox = Listbox(mainFrame, selectmode=BROWSE, width=100,
                                height=20, yscrollcommand=scrolly.set)
-
         for value in self.new_list:
             self.listbox.insert(END, value.get('title', ''))
-        self.listbox.bind('<ButtonRelease-1>', self.on_click_listbox)
+        self.listbox.bind('<Double-1>', self.on_click_listbox)
         self.listbox.pack(side=LEFT, padx=10, pady=10)
         scrolly.config(command=self.listbox.yview)
 
-    @property
-    def current_listbox_selected(self):
-        index = self.listbox.curselection()
-        key = None
-        if index:
-            key = self.listbox.get(index[0]).split(' ')[0]
-        return key
-
     def on_click_listbox(self, event):
-        key = self.current_listbox_selected
-        if key:
+        index = self.listbox.curselection()
+        if index:
+            self.current_listbox_selected = self.listbox.get(index[0])
+        if self.current_listbox_selected:
             for item in self.new_list:
-                if item['title'] == key:
+                if item['title'] == self.current_listbox_selected:
                     webbrowser.open(item['url'])
                     break
+
+    def update_content(self):
+        for value in self.parent.new_list:
+            self.listbox.insert(END, value.get('title', ''))
 
     def cancel(self):
         self.destroy()

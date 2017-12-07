@@ -651,9 +651,12 @@ def newsCrawl(widget, needItem=None):
         else:
             for url in item:
                 conf = item[url]
-                result[key].update(
-                    crawler(url, conf)
-                )
+                try:
+                    result[key].update(
+                        crawler(url, conf)
+                    )
+                except:
+                    pass
     print('end:', datetime.datetime.now())
     return result
 
