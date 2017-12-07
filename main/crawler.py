@@ -20,6 +20,13 @@ config = {
             "titleXpath": "a/text()",
             "urlXpath": "a/@href",
             "replaceUrl": (None, "http://www.gov.cn")
+        },
+        "http://www.gov.cn/xinwen/index.htm":{
+            "xpath": '//div[@class="slider-carousel"]/div/div/div/a',
+            "dateXpath": None,
+            "titleXpath": './text()',
+            "urlXpath": './@href',
+            "replaceUrl": (None, None)
         }
     },
     "证监会": {
@@ -63,6 +70,13 @@ config = {
     },
     "银监会":{
         "http://www.cbrc.gov.cn/chinese/home/docViewPage/110008.html":{
+            "xpath":'//div[@class="xia3"]/table/tr',
+            "dateXpath":'./td[2]/text()',
+            "titleXpath":'./td[1]/a/text()',
+            "urlXpath":'./td[1]/a/@href',
+            "replaceUrl":(None, "http://www.cbrc.gov.cn")
+        },
+        "http://www.cbrc.gov.cn/chinese/home/docViewPage/110010.html":{
             "xpath":'//div[@class="xia3"]/table/tr',
             "dateXpath":'./td[2]/text()',
             "titleXpath":'./td[1]/a/text()',
@@ -166,12 +180,12 @@ config = {
         }
     },
     "能源局":{
-        "http://www.mof.gov.cn/zhengwuxinxi/caizhengxinwen/": {
-            "xpath": '//table[@id="id_bl"]//tr/td',
-            "dateXpath": None,
-            "titleXpath": './@title',
+        "http://www.nea.gov.cn/xwzx/nyyw.htm":{
+            "xpath": '//div[@class="content"]/div/ul/li',
+            "dateXpath": './span/text()',
+            "titleXpath": './a/text()',
             "urlXpath": './a/@href',
-            "replaceUrl": ('./', "http://www.mof.gov.cn")
+            "replaceUrl": (None, None),
         }
     },
 
