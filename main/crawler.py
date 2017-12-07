@@ -20,6 +20,13 @@ config = {
             "titleXpath": "a/text()",
             "urlXpath": "a/@href",
             "replaceUrl": (None, "http://www.gov.cn")
+        },
+        "http://www.gov.cn/xinwen/index.htm":{
+            "xpath": '//div[@class="slider-carousel"]/div/div/div/a',
+            "dateXpath": None,
+            "titleXpath": './text()',
+            "urlXpath": './@href',
+            "replaceUrl": (None, None)
         }
     },
     "证监会": {
@@ -68,6 +75,29 @@ config = {
             "titleXpath":'./td[1]/a/text()',
             "urlXpath":'./td[1]/a/@href',
             "replaceUrl":(None, "http://www.cbrc.gov.cn")
+        },
+        "http://www.cbrc.gov.cn/chinese/home/docViewPage/110010.html":{
+            "xpath":'//div[@class="xia3"]/table/tr',
+            "dateXpath":'./td[2]/text()',
+            "titleXpath":'./td[1]/a/text()',
+            "urlXpath":'./td[1]/a/@href',
+            "replaceUrl":(None, "http://www.cbrc.gov.cn")
+        }
+    },
+    "环保部":{
+        "http://www.mep.gov.cn/gkml/73/75/index_835.htm":{
+            "xpath": '//div[@id="documentContainer"]/div',
+            "dateXpath": './li[4]/@title',
+            "titleXpath": './li/div/a/text()',
+            "urlXpath": './li/div/a/@href',
+            "replaceUrl": ("../../", "http://www.mep.gov.cn/gkml/")
+        },
+        "http://www.mep.gov.cn/gkml/index_839.htm":{
+            "xpath": '//div[@id="documentContainer"]/div',
+            "dateXpath": './li[4]/@title',
+            "titleXpath": './li/div/a/text()',
+            "urlXpath": './li/div/a/@href',
+            "replaceUrl": ("./", "http://www.mep.gov.cn/gkml/")
         }
     },
     "科技部":{
@@ -150,12 +180,12 @@ config = {
         }
     },
     "能源局":{
-        "http://www.mof.gov.cn/zhengwuxinxi/caizhengxinwen/": {
-            "xpath": '//table[@id="id_bl"]//tr/td',
-            "dateXpath": None,
-            "titleXpath": './@title',
+        "http://www.nea.gov.cn/xwzx/nyyw.htm":{
+            "xpath": '//div[@class="content"]/div/ul/li',
+            "dateXpath": './span/text()',
+            "titleXpath": './a/text()',
             "urlXpath": './a/@href',
-            "replaceUrl": ('./', "http://www.mof.gov.cn")
+            "replaceUrl": (None, None),
         }
     },
 
@@ -225,21 +255,49 @@ config = {
               "replaceUrl": ("./", "http://www.moa.gov.cn/zwllm/zwdt/")
           }
     },
+    "人社部":{
+        "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/buneiyaowen/": {
+            "xpath": '//div[@class="serviceMainListTabCon"]',
+            "dateXpath": './div[3]/span/text()',
+            "titleXpath": './div/span/a/@title',
+            "urlXpath": './div/span/a/@href',
+            "replaceUrl": (
+            "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
+        },
+        "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/": {
+            "xpath": '//div[@class="serviceMainListTabCon"]',
+            "dateXpath": './div[3]/span/text()',
+            "titleXpath": './div/span/a/@title',
+            "urlXpath": './div/span/a/@href',
+            "replaceUrl": (
+            "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
+        }
+    },
 
     "社科院":{
         "http://cass.cssn.cn/yaowen/": {
-          "xpath": '//div[@class="con"]/div/ul/li',
-          "dateXpath": None,
-          "titleXpath": './a/text()',
-          "urlXpath": './a/@href',
-          "replaceUrl": ("./", "http://cass.cssn.cn/yaowen/")
+            "xpath": '//div[@class="con"]/div/ul/li',
+            "dateXpath": None,
+            "titleXpath": './a/text()',
+            "urlXpath": './a/@href',
+            "replaceUrl": ("./", "http://cass.cssn.cn/yaowen/"),
+            "splitVal": "",
+            "conf":{
+                "xpath": '//div[@class="con"]/div/h1',
+                "dateXpath": None,
+                "titleXpath": './a/text()',
+                "urlXpath": './a/@href',
+                "replaceUrl": ("./", "http://cass.cssn.cn/yaowen/"),
+                "splitVal": ""
+            }
         },
         "http://cass.cssn.cn/gundong/": {
-          "xpath": '//div[@class="columnPagemain"]/div/ul/li',
-          "dateXpath": None,
-          "titleXpath": './a/text()',
-          "urlXpath": './a/@href',
-          "replaceUrl": ("../", 'http://cass.cssn.cn/')
+            "xpath": '//div[@class="columnPagemain"]/div/ul/li',
+            "dateXpath": None,
+            "titleXpath": './a/text()',
+            "urlXpath": './a/@href',
+            "replaceUrl": ("../", 'http://cass.cssn.cn/'),
+            "splitVal": ""
         }
     },
 
@@ -559,7 +617,7 @@ config = {
 }
 
 
-def crawler(url, conf):
+def crawler(url, conf, body=None):
     xpath = conf.get('xpath',None)
     dateXpath = conf.get('dateXpath',None)
     titleXpath = conf.get('titleXpath',None)
@@ -568,19 +626,22 @@ def crawler(url, conf):
     header = conf.get('header',None)
     type = conf.get('type', None)
     decode = conf.get('decode', None)
-    req = urllib2.Request(url)
-    req.add_header("User-Agent",headers["User-Agent"])
-    if header:
-        for key in header:
-            req.add_header(key,header[key])
-    try:
-        r = urllib2.urlopen(req, timeout=10)
-    except HTTPError as error:
-        r = urllib2.urlopen(req, timeout=10)
-    body = r.read()
-    if decode:
-        body = body.decode(decode)
+    if not body:
+        req = urllib2.Request(url)
+        req.add_header("User-Agent",headers["User-Agent"])
+        if header:
+            for key in header:
+                req.add_header(key,header[key])
+        try:
+            r = urllib2.urlopen(req, timeout=10)
+        except HTTPError as error:
+            r = urllib2.urlopen(req, timeout=10)
+        body = r.read()
+        if decode:
+            body = body.decode(decode)
     results = {}
+    if "conf" in conf:
+        results.update(crawler(url, conf['conf'], body))
     if xpath == "json":
         body = json.loads(body)
         for new in body['result']['data']:
@@ -617,7 +678,7 @@ def crawler(url, conf):
                     articleUrl = replaceUrl[2] + articleUrl
                 if not date and not dateXpath:
                     splitVal = conf.get("splitVal","（")
-                    title, date = title.split(splitVal)
+                    date = title.split(splitVal)[-1]
                     date = splitVal + date
                 results[title] = {
                     "title":title,
