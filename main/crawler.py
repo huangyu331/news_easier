@@ -6,6 +6,7 @@ import urllib.request as urllib2
 from lxml import etree
 from urllib.error import HTTPError
 import time
+import re
 
 
 headers = {
@@ -22,11 +23,16 @@ config = {
             "replaceUrl": (None, "http://www.gov.cn")
         },
         "http://www.gov.cn/xinwen/index.htm":{
-            "xpath": '//div[@class="slider-carousel"]/div/div/div/a',
-            "dateXpath": None,
-            "titleXpath": './text()',
-            "urlXpath": './@href',
-            "replaceUrl": (None, None)
+            "xpath": '//div[@class="column4"]/div[@class="column4_leftPart1"]/div[@class="zl_channel_body zl_channel_bodyxw"]/dl/dd/h4',
+            "dataXpath": 'span/text()',
+            'titleXpath': 'a/text()',
+            'urlXpath': 'a/@href',
+            'replaceUrl': (None, "http://www.gov.cn"),
+            # "xpath": '//div[@class="slider-carousel"]/div/div/div/a',
+            # "dateXpath": None,
+            # "titleXpath": './text()',
+            # "urlXpath": './@href',
+            # "replaceUrl": (None, None)
         }
     },
     "证监会": {
@@ -282,14 +288,14 @@ config = {
             "titleXpath": './a/text()',
             "urlXpath": './a/@href',
             "replaceUrl": ("./", "http://cass.cssn.cn/yaowen/"),
-            "splitVal": "",
-            "conf":{
+            # "splitVal": "",
+            "conf": {
                 "xpath": '//div[@class="con"]/div/h1',
                 "dateXpath": None,
-                "titleXpath": './a/text()',
-                "urlXpath": './a/@href',
+                "titleXpath": 'a/text()',
+                "urlXpath": 'a/@href',
                 "replaceUrl": ("./", "http://cass.cssn.cn/yaowen/"),
-                "splitVal": ""
+                # "splitVal": ""
             }
         },
         "http://cass.cssn.cn/gundong/": {
@@ -298,7 +304,7 @@ config = {
             "titleXpath": './a/text()',
             "urlXpath": './a/@href',
             "replaceUrl": ("../", 'http://cass.cssn.cn/'),
-            "splitVal": ""
+            # "splitVal": ""
         }
     },
 
@@ -417,7 +423,7 @@ config = {
             "titleXpath": './a/font/text()',
             "urlXpath": './a/@href',
             "replaceUrl": ("../", 'http://www.sda.gov.cn/WS01/'),
-            "decode":"gb2312"
+            "decode":"gbk"
         }
     },
 
@@ -634,9 +640,9 @@ def crawler(url, conf, body=None):
             for key in header:
                 req.add_header(key,header[key])
         try:
-            r = urllib2.urlopen(req, timeout=10)
+            r = urllib2.urlopen(req, timeout=20)
         except HTTPError as error:
-            r = urllib2.urlopen(req, timeout=10)
+            r = urllib2.urlopen(req, timeout=20)
         body = r.read()
         if decode:
             body = body.decode(decode)
@@ -681,6 +687,24 @@ def crawler(url, conf, body=None):
                     splitVal = conf.get("splitVal","（")
                     date = title.split(splitVal)[-1]
                     date = splitVal + date
+                    find = re.search('\d+-\d+-\d+', date)
+                    if find:
+                        pass
+                    else:
+                        arr = articleUrl.split('/')
+                        tem_time = arr[-1]
+                        time1 = re.search('t(\d+)_', tem_time)
+                        if time1:
+                            time1 = time1.groups()[0]
+                            try:
+                                date = time1[:4] + '-' + time1[4:6] + '-' + time[6:]
+                            except Exception:
+                                date = ''
+                            else:
+                                print('data:', date)
+                        else:
+                            date = ''
+
                 results[title] = {
                     "title":title,
                     "updated_at":datetime.datetime.strftime(datetime.datetime.now(),"%Y-%m-%d %H:%M:%S"),
@@ -707,6 +731,7 @@ def newsCrawl(widget, needItem=None):
                     try:
                         result_get = crawler(url, conf)
                     except Exception as e:
+                        print('error:', e)
                         raise Exception()
                     else:
                         result[key].update(result_get)
@@ -717,8 +742,8 @@ def newsCrawl(widget, needItem=None):
                     result[key].update(
                         crawler(url, conf)
                     )
-                except:
-                    pass
+                except Exception as e:
+                    print("error:", e)
     print('end:', datetime.datetime.now())
     return result
 
@@ -741,9 +766,12 @@ def newsCrawl1(needItem=None):
         else:
             for url in item:
                 conf = item[url]
-                result[key].update(
-                    crawler(url, conf)
-                )
+                try:
+                    result[key].update(
+                        crawler(url, conf)
+                    )
+                except Exception:
+                    pass
             # widget.progress.set(int(tem_index / total_category_num) * 100)
             # tem_index += 1
     print('end:', datetime.datetime.now())

@@ -9,6 +9,7 @@ import datetime
 from tkinter.messagebox import *
 import threading
 import time
+import http.client
 
 
 class MainGUI(tk.Tk):
@@ -139,11 +140,14 @@ class MainGUI(tk.Tk):
                 time.sleep(5)
                 self.start_refresh_selected()
             else:
+                print("result:", result)
                 keys = result.keys()
                 for key in keys:
                     if result[key]:
                         prev_dict = self.data_source[key]
                         new_dict = result[key]
+                        print("prev:", prev_dict)
+                        print('new:', new_dict)
                         new_dict_keys = new_dict.keys()
                         for key1 in new_dict_keys:
                             if prev_dict.get(key1):
@@ -161,6 +165,7 @@ class MainGUI(tk.Tk):
                                 readed_num += 1
                         unread_num = total - readed_num
                         ratio = '[{}/{}]'.format(unread_num, readed_num)
+                        self.data_source[key] = new_dict
                         self.data_source[key]['ratio'] = ratio
                 try:
                     json.dump(self.data_source, open('data.json', 'w'))
@@ -186,7 +191,7 @@ class MainGUI(tk.Tk):
                     new_dict = result[key]
                     new_dict_keys = new_dict.keys()
                     for key1 in new_dict_keys:
-                        if prev_dict.get(key1):
+                        if prev_dict.get(key1, None):
                             new_dict[key1] = prev_dict[key1]
                             new_dict[key1]['updated_at'] = \
                                 str(datetime.datetime.now().replace(microsecond=0))
@@ -218,6 +223,7 @@ class MainGUI(tk.Tk):
                 self.refresh_listbox()
                 if auto:
                     if self.new_list:
+                        print("self.new_list:", self.new_list)
                         self.popup_new_contents()
 
     def refresh_all(self):
@@ -334,7 +340,7 @@ class MainGUI(tk.Tk):
         self.data_source_keys = self.data_source.keys()
         scrolly = Scrollbar(self.dataFrame)
         scrolly.pack(side=RIGHT, fill=Y)
-        self.listbox = Listbox(self.dataFrame, selectmode=BROWSE, width=20,
+        self.listbox = Listbox(self.dataFrame, selectmode=BROWSE, width=25,
                                height=30, yscrollcommand=scrolly.set, bg=self.font_color)
         for key in self.data_source_keys:
             value = self.data_source[key]
@@ -544,6 +550,7 @@ class ShowNewSitesDialog(tk.Toplevel):
             self.current_listbox_selected = self.listbox.get(index[0])
         if self.current_listbox_selected:
             for item in self.new_list:
+                print('item:', item)
                 if item['title'] == self.current_listbox_selected:
                     webbrowser.open(item['url'])
                     break
@@ -605,3 +612,20 @@ class PopupSiteManageDialog(tk.Toplevel):
             if value:
                 webbrowser.open(value)
                 break
+
+
+def get_webservertime(host):
+    conn = http.client.HTTPConnection(host)
+    conn.request("GET", "/")
+    r = conn.getresponse()
+    ts = r.getheader('date')
+    ltime = time.strptime(ts[5:25], "%d %b %Y %H:%M:%S")
+    ttime = time.localtime(time.mktime(ltime) + 8 * 60 * 60)
+    return (ttime.tm_year, ttime.tm_mon, ttime.tm_mday)
+
+def start():
+    date = get_webservertime('www.baidu.com')
+    if date[0] <= 2017:
+        if date[1] <= 12:
+            if date[2] <= 15:
+                MainGUI()
