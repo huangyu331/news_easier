@@ -685,26 +685,29 @@ def crawler(url, conf, body=None):
                 if "http://" not in articleUrl:
                     articleUrl = replaceUrl[2] + articleUrl
                 if not date and not dateXpath:
-                    splitVal = conf.get("splitVal","（")
-                    date = title.split(splitVal)[-1]
-                    date = splitVal + date
-                    find = re.search('\d+-\d+-\d+', date)
-                    if find:
-                        pass
-                    else:
-                        arr = articleUrl.split('/')
-                        tem_time = arr[-1]
-                        time1 = re.search('t(\d+)_', tem_time)
-                        if time1:
-                            time1 = time1.groups()[0]
-                            try:
-                                date = time1[:4] + '-' + time1[4:6] + '-' + time[6:]
-                            except Exception:
-                                date = ''
-                            else:
-                                print('data:', date)
+                    try:
+                        splitVal = conf.get("splitVal","（")
+                        date = title.split(splitVal)[-1]
+                        date = splitVal + date
+                        find = re.search('\d+-\d+-\d+', date)
+                        if find:
+                            pass
                         else:
-                            date = ''
+                            arr = articleUrl.split('/')
+                            tem_time = arr[-1]
+                            time1 = re.search('t(\d+)_', tem_time)
+                            if time1:
+                                time1 = time1.groups()[0]
+                                try:
+                                    date = time1[:4] + '-' + time1[4:6] + '-' + time[6:]
+                                except Exception:
+                                    date = ''
+                                else:
+                                    print('data:', date)
+                            else:
+                                date = ''
+                    except:
+                        pass
 
                 results[title] = {
                     "title":title,
