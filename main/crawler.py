@@ -23,16 +23,17 @@ config = {
             "replaceUrl": (None, "http://www.gov.cn")
         },
         "http://www.gov.cn/xinwen/index.htm":{
-            "xpath": '//div[@class="column4"]/div[@class="column4_leftPart1"]/div[@class="zl_channel_body zl_channel_bodyxw"]/dl/dd/h4',
-            "dataXpath": 'span/text()',
-            'titleXpath': 'a/text()',
-            'urlXpath': 'a/@href',
-            'replaceUrl': (None, "http://www.gov.cn"),
-            # "xpath": '//div[@class="slider-carousel"]/div/div/div/a',
-            # "dateXpath": None,
-            # "titleXpath": './text()',
-            # "urlXpath": './@href',
-            # "replaceUrl": (None, None)
+            # "xpath": '//div[@class="column4"]/div[@class="column4_leftPart1"]/div[@class="zl_channel_body zl_channel_bodyxw"]/dl/dd/h4',
+            # "dataXpath": 'span/text()',
+            # 'titleXpath': 'a/text()',
+            # 'urlXpath': 'a/@href',
+            # 'replaceUrl': (None, "http://www.gov.cn"),
+            "xpath": '//div[@class="slider-carousel"]/div/div/div/a',
+            "dateXpath": None,
+            "titleXpath": './text()',
+            "urlXpath": './@href',
+            "replaceUrl": (None, None),
+            "splitVal": ""
         }
     },
     "证监会": {
