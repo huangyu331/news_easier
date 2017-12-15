@@ -687,9 +687,13 @@ def crawler(url, conf, body=None):
                 if not date and not dateXpath:
                     try:
                         splitVal = conf.get("splitVal","（")
-                        date = title.split(splitVal)[-1]
-                        date = splitVal + date
-                        find = re.search('\d+-\d+-\d+', date)
+                        find = None
+                        try:
+                            date = title.split(splitVal)[-1]
+                            date = splitVal + date
+                            find = re.search('\d+-\d+-\d+', date)
+                        except:
+                            pass
                         if find:
                             pass
                         else:
@@ -705,7 +709,9 @@ def crawler(url, conf, body=None):
                                 else:
                                     print('data:', date)
                             else:
-                                date = ''
+                                time1 = re.search(r"/(\d{4})-(\d{2})/(\d{2})", articleUrl)
+                                if time1:
+                                    date = time1.group(1)+"-"+time1.group(2)+"-"+time1.group(3)
                     except:
                         pass
 
