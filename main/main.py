@@ -116,7 +116,6 @@ class MainGUI(tk.Tk):
                 for key in keys:
                     value = values_dict[key]
                     if isinstance(value, dict):
-                        # if value['published_at']:
                         values_list.append(value)
                 values_list.sort(key=lambda x: x['published_at'], reverse=True)
                 self.new_tree(values_list)
@@ -226,7 +225,6 @@ class MainGUI(tk.Tk):
                 self.refresh_listbox()
                 if auto:
                     if self.new_list:
-                        print("self.new_list:", self.new_list)
                         self.popup_new_contents()
 
     def refresh_all(self):

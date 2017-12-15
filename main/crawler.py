@@ -711,7 +711,7 @@ def crawler(url, conf, body=None):
                     "url":articleUrl
                 }
             except Exception as e:
-                print("e:", e)
+                passs
     return results
 
 def newsCrawl(widget, needItem=None):
@@ -744,7 +744,6 @@ def newsCrawl(widget, needItem=None):
                 except Exception as e:
                     print("error:", e)
     print('end:', datetime.datetime.now())
-    print("result:", result)
     return result
 
 def newsCrawl1(needItem=None):
