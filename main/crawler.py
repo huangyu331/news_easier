@@ -23,11 +23,6 @@ config = {
             "replaceUrl": (None, "http://www.gov.cn")
         },
         "http://www.gov.cn/xinwen/index.htm":{
-            # "xpath": '//div[@class="column4"]/div[@class="column4_leftPart1"]/div[@class="zl_channel_body zl_channel_bodyxw"]/dl/dd/h4',
-            # "dataXpath": 'span/text()',
-            # 'titleXpath': 'a/text()',
-            # 'urlXpath': 'a/@href',
-            # 'replaceUrl': (None, "http://www.gov.cn"),
             "xpath": '//div[@class="slider-carousel"]/div/div/div/a',
             "dateXpath": None,
             "titleXpath": './text()',
@@ -695,28 +690,22 @@ def crawler(url, conf, body=None):
                         else:
                             arr = articleUrl.split('/')
                             tem_time = arr[-1]
-                            time1 = re.search('t(\d+)_', tem_time)
+                            time1 = re.search('\d{8}', tem_time)
                             if time1:
-                                time1 = time1.groups()[0]
-                                try:
-                                    date = time1[:4] + '-' + time1[4:6] + '-' + time[6:]
-                                except Exception:
-                                    date = ''
-                                else:
-                                    print('data:', date)
+                                time1 = time1.group()
+                                date = time1[:4]+'-'+time1[4:6]+'-'+time1[6:]
                             else:
                                 date = ''
                     except:
                         pass
-
                 results[title] = {
                     "title":title,
                     "updated_at":datetime.datetime.strftime(datetime.datetime.now(),"%Y-%m-%d %H:%M:%S"),
                     "published_at":date,
                     "url":articleUrl
                 }
-            except:
-                pass
+            except Exception as e:
+                print("e:", e)
     return results
 
 def newsCrawl(widget, needItem=None):
@@ -749,6 +738,7 @@ def newsCrawl(widget, needItem=None):
                 except Exception as e:
                     print("error:", e)
     print('end:', datetime.datetime.now())
+    print("result:", result)
     return result
 
 def newsCrawl1(needItem=None):

@@ -108,13 +108,15 @@ class MainGUI(tk.Tk):
             self.current_listbox_selected = key
         key = self.current_listbox_selected
         if key:
-            values_dict = self.data_source.get(key, {})
+            data_source = self.get_data_source()
+            values_dict = data_source.get(key, {})
             values_list = []
             if values_dict:
                 keys = values_dict.keys()
                 for key in keys:
                     value = values_dict[key]
                     if isinstance(value, dict):
+                        # if value['published_at']:
                         values_list.append(value)
                 values_list.sort(key=lambda x: x['published_at'], reverse=True)
                 self.new_tree(values_list)
@@ -134,20 +136,18 @@ class MainGUI(tk.Tk):
         self.progress.set(0)
         if self.current_listbox_selected:
             value = self.current_listbox_selected
+            current_key = value.split(' ')[0]
             try:
                 result = newsCrawl(self, [value])
             except Exception as e:
                 time.sleep(5)
                 self.start_refresh_selected()
             else:
-                print("result:", result)
                 keys = result.keys()
                 for key in keys:
                     if result[key]:
                         prev_dict = self.data_source[key]
                         new_dict = result[key]
-                        print("prev:", prev_dict)
-                        print('new:', new_dict)
                         new_dict_keys = new_dict.keys()
                         for key1 in new_dict_keys:
                             if prev_dict.get(key1):
@@ -167,13 +167,16 @@ class MainGUI(tk.Tk):
                         ratio = '[{}/{}]'.format(unread_num, readed_num)
                         self.data_source[key] = new_dict
                         self.data_source[key]['ratio'] = ratio
+                    else:
+                        if key == current_key:
+                            self.data_source[key] = {}
                 try:
                     json.dump(self.data_source, open('data.json', 'w'))
-                    self.on_click_listbox(1)
                 except Exception as e:
                     print('error:', e)
                     showerror(title='错误❌', message='未知异常，请联系开发人员')
                 else:
+                    self.on_click_listbox(1)
                     self.refresh_listbox()
 
     def start_refresh_all(self, auto=None):
@@ -550,7 +553,6 @@ class ShowNewSitesDialog(tk.Toplevel):
             self.current_listbox_selected = self.listbox.get(index[0])
         if self.current_listbox_selected:
             for item in self.new_list:
-                print('item:', item)
                 if item['title'] == self.current_listbox_selected:
                     webbrowser.open(item['url'])
                     break
