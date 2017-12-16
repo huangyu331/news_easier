@@ -711,7 +711,7 @@ def crawler(url, conf, body=None):
                     "url":articleUrl
                 }
             except Exception as e:
-                passs
+                pass
     return results
 
 def newsCrawl(widget, needItem=None):

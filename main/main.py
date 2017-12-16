@@ -47,6 +47,16 @@ class MainGUI(tk.Tk):
             self.wait_window(self.pw)
             return
 
+    @property
+    def get_all_key_url(self):
+        data_source = self.data_source
+        all_key_url = dict()
+        for list_key in data_source:
+            for key in data_source[list_key]:
+                if key != 'ratio':
+                    all_key_url[key] = data_source[list_key][key]['url']
+        return all_key_url
+
     def onDBClick(self, event=None):
         if self.tree.selection():
             data_source_key = self.current_listbox_selected
@@ -54,7 +64,7 @@ class MainGUI(tk.Tk):
             values = self.tree.item(item, "values")
             title = values[0]
             data = self.data_source.get(data_source_key)
-            url = data[title]['url']
+            url = self.get_all_key_url[title]
             webbrowser.open(url)
             data[title]['tag'] = 'clicked'
             values_list = []
@@ -359,7 +369,7 @@ class MainGUI(tk.Tk):
         self.keywordEntry = Entry(self.list_search_frame)
         self.keywordEntry.bind('<Return>', self.search)
         self.keywordEntry.pack(side=LEFT)
-        a = Button(self.list_search_frame, text='搜索', command=self.search, padx=20, bg=self.font_color, fg='blue')
+        a = Button(self.list_search_frame, text='搜索', command=self.search, padx=20, bg=self.font_color)
         a.pack(side=LEFT, padx=50)
         self.tree = ttk.Treeview(list_show_frame, show='headings', selectmode='extended',
                                  columns=('col1', 'col2', 'col3'), height=28)
@@ -627,5 +637,5 @@ def start():
     date = get_webservertime('www.baidu.com')
     if date[0] <= 2017:
         if date[1] <= 12:
-            if date[2] <= 15:
+            if date[2] <= 30:
                 MainGUI()
