@@ -66,32 +66,36 @@ class MainGUI(tk.Tk):
             data = self.data_source.get(data_source_key)
             url = self.get_all_key_url[title]
             webbrowser.open(url)
-            data[title]['tag'] = 'clicked'
-            values_list = []
-            keys = data.keys()
-            for key in keys:
-                value = data[key]
-                if isinstance(value, dict):
-                    values_list.append(value)
-            values_list.sort(key=lambda x: x['published_at'], reverse=True)
-            self.new_tree(values_list)
-            readed_num = 0
-            if data.get('ratio', None):
-                total = len(data) - 1
+            try:
+                data[title]['tag'] = 'clicked'
+            except Exception as e:
+                pass
             else:
-                total = len(data)
-            for item in data:
-                value = data[item]
-                if isinstance(value, dict):
-                    if value.get('tag', None):
-                        readed_num += 1
-            unread_num = total - readed_num
-            ratio = '[{}/{}]'.format(unread_num, readed_num)
-            data['ratio'] = ratio
-            self.data_source[data_source_key] = data
-            json.dump(self.data_source, open('data.json', 'w'))
-            self.refresh_listbox()
-            json.dump(self.data_source, open('data.json', 'w'))
+                values_list = []
+                keys = data.keys()
+                for key in keys:
+                    value = data[key]
+                    if isinstance(value, dict):
+                        values_list.append(value)
+                values_list.sort(key=lambda x: x['published_at'], reverse=True)
+                self.new_tree(values_list)
+                readed_num = 0
+                if data.get('ratio', None):
+                    total = len(data) - 1
+                else:
+                    total = len(data)
+                for item in data:
+                    value = data[item]
+                    if isinstance(value, dict):
+                        if value.get('tag', None):
+                            readed_num += 1
+                unread_num = total - readed_num
+                ratio = '[{}/{}]'.format(unread_num, readed_num)
+                data['ratio'] = ratio
+                self.data_source[data_source_key] = data
+                json.dump(self.data_source, open('data.json', 'w'))
+                self.refresh_listbox()
+                json.dump(self.data_source, open('data.json', 'w'))
 
     def new_tree(self, values_list):
         items = self.tree.get_children()
@@ -182,7 +186,6 @@ class MainGUI(tk.Tk):
                 try:
                     json.dump(self.data_source, open('data.json', 'w'))
                 except Exception as e:
-                    print('error:', e)
                     showerror(title='错误❌', message='未知异常，请联系开发人员')
                 else:
                     self.on_click_listbox(1)
@@ -225,10 +228,9 @@ class MainGUI(tk.Tk):
                     self.data_source[key] = new_dict
                     self.data_source[key]['ratio'] = ratio
             try:
-                json.dump(result, open('data.json', 'w'))
+                json.dump(self.data_source, open('data.json', 'w'))
                 self.on_click_listbox(1)
             except Exception as e:
-                print('error:', e)
                 showerror(title='错误❌', message='未知异常，请联系开发人员')
                 raise Exception()
             else:
@@ -247,7 +249,7 @@ class MainGUI(tk.Tk):
             try:
                 data = json.load(open('refresh_time.json', 'r'))
             except Exception as e:
-                print('error:', e)
+                pass
             else:
                 time_refresh = data.get('time', 0)
                 if time_refresh:
@@ -291,35 +293,39 @@ class MainGUI(tk.Tk):
             data_source_key = self.current_listbox_selected
             items = self.tree.selection()
             data = self.data_source.get(data_source_key)
-            for item in items:
-                values = self.tree.item(item, "values")
-                title = values[0]
-                data[title]['tag'] = 'clicked'
-            values_list = []
-            keys = data.keys()
-            for key in keys:
-                value = data[key]
-                if isinstance(value, dict):
-                    values_list.append(data[key])
-            values_list.sort(key=lambda x: x['published_at'], reverse=True)
-            self.new_tree(values_list)
-
-            readed_num = 0
-            if data.get('ratio', None):
-                total = len(data) - 1
+            try:
+                for item in items:
+                    values = self.tree.item(item, "values")
+                    title = values[0]
+                    data[title]['tag'] = 'clicked'
+            except:
+                pass
             else:
-                total = len(data)
-            for item in data:
-                value = data[item]
-                if isinstance(value, dict):
-                    if value.get('tag', None):
-                        readed_num += 1
-            unread_num = total - readed_num
-            ratio = '[{}/{}]'.format(unread_num, readed_num)
-            data['ratio'] = ratio
-            self.data_source[data_source_key] = data
-            json.dump(self.data_source, open('data.json', 'w'))
-            self.refresh_listbox()
+                values_list = []
+                keys = data.keys()
+                for key in keys:
+                    value = data[key]
+                    if isinstance(value, dict):
+                        values_list.append(data[key])
+                values_list.sort(key=lambda x: x['published_at'], reverse=True)
+                self.new_tree(values_list)
+
+                readed_num = 0
+                if data.get('ratio', None):
+                    total = len(data) - 1
+                else:
+                    total = len(data)
+                for item in data:
+                    value = data[item]
+                    if isinstance(value, dict):
+                        if value.get('tag', None):
+                            readed_num += 1
+                unread_num = total - readed_num
+                ratio = '[{}/{}]'.format(unread_num, readed_num)
+                data['ratio'] = ratio
+                self.data_source[data_source_key] = data
+                json.dump(self.data_source, open('data.json', 'w'))
+                self.refresh_listbox()
 
     def refresh_listbox(self):
         index = self.listbox.curselection()
@@ -397,7 +403,7 @@ class MainGUI(tk.Tk):
         list_show_frame.pack(side=BOTTOM)
         self.listFrame.pack(side=RIGHT)
         self.refreshFrame = Frame(self.dataFrame, bg=self.font_color)
-        Button(self.refreshFrame, text="刷新选中", command=self.refresh, bg=self.font_color, fg=self.font_color).pack(padx=10, pady=20)
+        Button(self.refreshFrame, text="刷新选中", command=self.refresh, bg=self.font_color).pack(padx=10, pady=20)
         Button(self.refreshFrame, text="刷新全部", command=self.refresh_all, bg=self.font_color).pack(padx=10, pady=20)
         self.progress_frame = Frame(self.refreshFrame, bg=self.font_color)
         self.progress_label = Label(self.progress_frame, text='进度条:', width=8, bg=self.font_color)
@@ -559,13 +565,14 @@ class ShowNewSitesDialog(tk.Toplevel):
         index = self.listbox.curselection()
         if index:
             self.current_listbox_selected = self.listbox.get(index[0])
-        if self.current_listbox_selected:
-            for item in self.new_list:
-                if item['title'] == self.current_listbox_selected:
-                    webbrowser.open(item['url'])
-                    break
+            if self.current_listbox_selected:
+                for item in self.new_list:
+                    if item['title'] == self.current_listbox_selected:
+                        webbrowser.open(item['url'])
+                        break
 
     def update_content(self):
+        self.new_list += self.parent.new_list
         for value in self.parent.new_list:
             self.listbox.insert(END, value.get('title', ''))
 
@@ -629,13 +636,19 @@ def get_webservertime(host):
     conn.request("GET", "/")
     r = conn.getresponse()
     ts = r.getheader('date')
-    ltime = time.strptime(ts[5:25], "%d %b %Y %H:%M:%S")
-    ttime = time.localtime(time.mktime(ltime) + 8 * 60 * 60)
-    return (ttime.tm_year, ttime.tm_mon, ttime.tm_mday)
+    if not ts:
+        return None
+    else:
+        ltime = time.strptime(ts[5:25], "%d %b %Y %H:%M:%S")
+        ttime = time.localtime(time.mktime(ltime) + 8 * 60 * 60)
+        return (ttime.tm_year, ttime.tm_mon, ttime.tm_mday)
 
 def start():
     date = get_webservertime('www.baidu.com')
-    if date[0] <= 2017:
-        if date[1] <= 12:
-            if date[2] <= 30:
-                MainGUI()
+    if date is None:
+        MainGUI()
+    else:
+        if date[0] <= 2017:
+            if date[1] <= 12:
+                if date[2] <= 30:
+                    MainGUI()

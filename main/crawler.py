@@ -53,7 +53,7 @@ config = {
             "dateXpath": './/td[3]/text()',
             "titleXpath": './/td[2]//a/@title',
             "urlXpath": './/td[2]//a/@href',
-            "replaceUrl": (None, "http://www.circ.gov.cn")
+            "replaceUrl": (None, "http://www.gov.cn")
         },
         "http://www.circ.gov.cn/web/site0/tab5212/": {
             "xpath": '//div[@id="ess_mailrightpane"]/div/div[2]//td[@valign="top"]',
@@ -67,7 +67,7 @@ config = {
             "dateXpath": 'span/text()',
             "titleXpath": 'a/text()',
             "urlXpath": 'a/@href',
-            "replaceUrl": (None, "http://www.circ.gov.cn")
+            "replaceUrl": (None, "http://www.gov.cn")
         }
     },
     "银监会":{
@@ -730,7 +730,6 @@ def newsCrawl(widget, needItem=None):
                     try:
                         result_get = crawler(url, conf)
                     except Exception as e:
-                        print('error:', e)
                         raise Exception()
                     else:
                         result[key].update(result_get)
@@ -742,7 +741,7 @@ def newsCrawl(widget, needItem=None):
                         crawler(url, conf)
                     )
                 except Exception as e:
-                    print("error:", e)
+                    pass
     print('end:', datetime.datetime.now())
     return result
 
