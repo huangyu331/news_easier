@@ -265,7 +265,7 @@ config = {
             "titleXpath": './div/span/a/@title',
             "urlXpath": './div/span/a/@href',
             "replaceUrl": (
-            "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/')
+            "./", 'http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/buneiyaowen/')
         },
         "http://www.mohrss.gov.cn/SYrlzyhshbzb/dongtaixinwen/dfdt/": {
             "xpath": '//div[@class="serviceMainListTabCon"]',
@@ -384,10 +384,10 @@ config = {
 
     "文化部":{
           "http://www.mcprc.gov.cn/whzx/whyw/": {
-              "xpath": '//table[6]//tr/td[3]/table[5]//tr/td[2]/table//tr',
-              "dateXpath": './td[3]/text()',
-              "titleXpath": './td[2]/a/text()',
-              "urlXpath": './td[2]/a/@href',
+              'xpath': '//div[@class="bt-rig-cen-01"]/table/tr',
+              'dateXpath': './td[2]/text()',
+              'titleXpath': './td[1]/a/text()',
+              'urlXpath': './td[1]/a/@href',
               "replaceUrl": ("./", 'http://www.mcprc.gov.cn/whzx/whyw/')
           }
     },
@@ -491,9 +491,10 @@ config = {
         "http://finance.chinanews.com/cj/gd.shtml":{
              "xpath": '//div[@class="content_list"]/ul/li',
              "dateXpath": './div[3]/text()',
-             "titleXpath": './div/a/text()',
-             "urlXpath": './div/a/@href',
-             "replaceUrl": (None, 'http://finance.chinanews.com')
+             "titleXpath": './div[@class="dd_bt"]/a/text()',
+             "urlXpath": './div[@class="dd_bt"]/a/@href',
+             "replaceUrl": (None, 'http://finance.chinanews.com'),
+             "decode": "gb2312"
          }
     },
 
@@ -503,7 +504,8 @@ config = {
              "dateXpath": './div[3]/text()',
              "titleXpath": './div/a/text()',
              "urlXpath": './div/a/@href',
-             "replaceUrl": (None, 'http://www.chinanews.com')
+             "replaceUrl": (None, 'http://www.chinanews.com'),
+             "decode": "GBK"
         }
     },
 
@@ -542,7 +544,8 @@ config = {
             "dateXpath": './dd/span/text()',
             "titleXpath": './dt/a/text()',
             "urlXpath": './dt/a/@href',
-            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/hyzx/")
+            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/hyzx/"),
+            "decode":"gbk"
         }
     },
 
@@ -552,7 +555,8 @@ config = {
             "dateXpath": './dd/span/text()',
             "titleXpath": './dt/a/text()',
             "urlXpath": './dt/a/@href',
-            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/kj/")
+            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/kj/"),
+            "decode":"gbk"
         }
     },
 
@@ -562,7 +566,8 @@ config = {
             "dateXpath": './dd/span/text()',
             "titleXpath": './dt/a/text()',
             "urlXpath": './dt/a/@href',
-            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/qcgs/")
+            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/qcgs/"),
+            "decode":"gbk"
         }
     },
 
@@ -572,7 +577,8 @@ config = {
             "dateXpath": './dd/span/text()',
             "titleXpath": './dt/a/text()',
             "urlXpath": './dt/a/@href',
-            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/fcgs/")
+            "replaceUrl": ("./", "http://www.cs.com.cn/ssgs/fcgs/"),
+            "decode":"gbk"
         }
     },
     "腾讯财经（实时）":{
@@ -586,7 +592,7 @@ config = {
                 "Referer": "http://roll.finance.qq.com/"
             },
             "type": "jsonxpath",
-            "decode": "gb2312"
+            "decode": "gbk"
         }
 
     },
@@ -730,6 +736,7 @@ def newsCrawl(widget, needItem=None):
                     try:
                         result_get = crawler(url, conf)
                     except Exception as e:
+                        print("err:", e)
                         raise Exception()
                     else:
                         result[key].update(result_get)

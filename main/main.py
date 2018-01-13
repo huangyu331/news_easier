@@ -120,19 +120,19 @@ class MainGUI(tk.Tk):
         if index:
             key = self.listbox.get(index[0]).split(' ')[0]
             self.current_listbox_selected = key
-        key = self.current_listbox_selected
-        if key:
-            data_source = self.get_data_source()
-            values_dict = data_source.get(key, {})
-            values_list = []
-            if values_dict:
-                keys = values_dict.keys()
-                for key in keys:
-                    value = values_dict[key]
-                    if isinstance(value, dict):
-                        values_list.append(value)
-                values_list.sort(key=lambda x: x['published_at'], reverse=True)
-                self.new_tree(values_list)
+            key = self.current_listbox_selected
+            if key:
+                data_source = self.get_data_source()
+                values_dict = data_source.get(key, {})
+                values_list = []
+                if values_dict:
+                    keys = values_dict.keys()
+                    for key in keys:
+                        value = values_dict[key]
+                        if isinstance(value, dict):
+                            values_list.append(value)
+                    values_list.sort(key=lambda x: x['published_at'], reverse=True)
+                    self.new_tree(values_list)
 
     def add_data_source(self, item):
         self.data_source.append(item)
@@ -146,6 +146,7 @@ class MainGUI(tk.Tk):
         t.start()
 
     def start_refresh_selected(self):
+        self.new_list = []
         self.progress.set(0)
         if self.current_listbox_selected:
             value = self.current_listbox_selected
@@ -162,11 +163,28 @@ class MainGUI(tk.Tk):
                         prev_dict = self.data_source[key]
                         new_dict = result[key]
                         new_dict_keys = new_dict.keys()
-                        for key1 in new_dict_keys:
-                            if prev_dict.get(key1):
-                                new_dict[key1] = prev_dict[key1]
-                                new_dict[key1]['updated_at'] = \
-                                    str(datetime.datetime.now().replace(microsecond=0))
+                        if len(new_dict) < len(prev_dict)-1:
+                            for key1 in new_dict_keys:
+                                if prev_dict.get(key1):
+                                    prev_dict[key1]['updated_at'] = \
+                                        str(datetime.datetime.now().replace(microsecond=0))
+                                else:
+                                    new_dict[key1]['updated_at'] = \
+                                        str(datetime.datetime.now().replace(microsecond=0))
+                                    new_dict[key1]['ref'] = key
+                                    self.new_list.append(new_dict[key1])
+                            new_dict.update(prev_dict)
+                        else:
+                            for key1 in new_dict_keys:
+                                if prev_dict.get(key1):
+                                    new_dict[key1] = prev_dict[key1]
+                                    new_dict[key1]['updated_at'] = \
+                                        str(datetime.datetime.now().replace(microsecond=0))
+                                else:
+                                    new_dict[key1]['updated_at'] = \
+                                        str(datetime.datetime.now().replace(microsecond=0))
+                                    new_dict[key1]["ref"] = key
+                                    self.new_list.append(new_dict[key1])
                         readed_num = 0
                         if new_dict.get('ratio', None):
                             total = len(new_dict) - 1
@@ -174,7 +192,7 @@ class MainGUI(tk.Tk):
                             total = len(new_dict)
                         for item in new_dict:
                             value = new_dict[item]
-                            if value.get('tag', None):
+                            if isinstance(value, dict) and value.get('tag', None):
                                 readed_num += 1
                         unread_num = total - readed_num
                         ratio = '[{}/{}]'.format(unread_num, readed_num)
@@ -186,10 +204,12 @@ class MainGUI(tk.Tk):
                 try:
                     json.dump(self.data_source, open('data.json', 'w'))
                 except Exception as e:
-                    showerror(title='错误❌', message='未知异常，请联系开发人员')
+                    pass
                 else:
                     self.on_click_listbox(1)
                     self.refresh_listbox()
+                    if self.new_list:
+                        self.popup_new_contents()
 
     def start_refresh_all(self, auto=None):
         self.new_list = []
@@ -205,15 +225,29 @@ class MainGUI(tk.Tk):
                     prev_dict = self.data_source[key]
                     new_dict = result[key]
                     new_dict_keys = new_dict.keys()
-                    for key1 in new_dict_keys:
-                        if prev_dict.get(key1, None):
-                            new_dict[key1] = prev_dict[key1]
-                            new_dict[key1]['updated_at'] = \
-                                str(datetime.datetime.now().replace(microsecond=0))
-                        else:
-                            new_dict[key1]['updated_at'] = \
-                                str(datetime.datetime.now().replace(microsecond=0))
-                            self.new_list.append(new_dict[key1])
+                    if len(new_dict) < len(prev_dict):
+                        for key1 in new_dict_keys:
+                            if prev_dict.get(key1, None):
+                                prev_dict[key1]['updated_at'] = \
+                                    str(datetime.datetime.now().replace(microsecond=0))
+                            else:
+                                new_dict[key1]['updated_at'] = \
+                                    str(datetime.datetime.now().replace(microsecond=0))
+                                new_dict[key1]["ref"] = key
+                                self.new_list.append(new_dict[key1])
+                        new_dict.update(prev_dict)
+                    else:
+                        for key1 in new_dict_keys:
+                            if prev_dict.get(key1, None):
+                                new_dict[key1] = prev_dict[key1]
+                                new_dict[key1]['updated_at'] = \
+                                    str(datetime.datetime.now().replace(microsecond=0))
+                            else:
+                                new_dict[key1]['updated_at'] = \
+                                    str(datetime.datetime.now().replace(microsecond=0))
+                                new_dict[key1]["ref"] = key
+                                self.new_list.append(new_dict[key1])
+
                     readed_num = 0
                     if new_dict.get('ratio', None):
                         total = len(new_dict) - 1
@@ -221,7 +255,7 @@ class MainGUI(tk.Tk):
                         total = len(new_dict)
                     for item in new_dict:
                         value = new_dict[item]
-                        if value.get('tag', None):
+                        if isinstance(value, dict) and value.get('tag', None):
                             readed_num += 1
                     unread_num = total - readed_num
                     ratio = '[{}/{}]'.format(unread_num, readed_num)
@@ -231,13 +265,11 @@ class MainGUI(tk.Tk):
                 json.dump(self.data_source, open('data.json', 'w'))
                 self.on_click_listbox(1)
             except Exception as e:
-                showerror(title='错误❌', message='未知异常，请联系开发人员')
-                raise Exception()
+                pass
             else:
                 self.refresh_listbox()
-                if auto:
-                    if self.new_list:
-                        self.popup_new_contents()
+                if self.new_list:
+                    self.popup_new_contents()
 
     def refresh_all(self):
         self.progress.set(0)
@@ -415,9 +447,9 @@ class MainGUI(tk.Tk):
         self.refreshFrame.pack(side=LEFT)
 
         self.mainFrame.pack()
-        top = Menu(self, font=("黑体", 12, "bold"))
+        top = Menu(self, font=("黑体", 10, "bold"))
         self.config(menu=top)
-        file = Menu(top, tearoff=0, font=("黑体", 12, "bold"))
+        file = Menu(top, tearoff=0, font=("黑体", 10, "bold"))
         file.add_command(label='添加收藏', command=self.open, underline=0)
         file.add_command(label='收藏管理', command=self.site_manage, underline=0)
         file.add_separator()
@@ -556,7 +588,10 @@ class ShowNewSitesDialog(tk.Toplevel):
         self.listbox = Listbox(mainFrame, selectmode=BROWSE, width=100,
                                height=20, yscrollcommand=scrolly.set)
         for value in self.new_list:
-            self.listbox.insert(END, value.get('title', ''))
+            title = value.get('title', '')
+            ref = value.get('ref', '')
+            insert = title + '                    ' + ref
+            self.listbox.insert(END, insert)
         self.listbox.bind('<Double-1>', self.on_click_listbox)
         self.listbox.pack(side=LEFT, padx=10, pady=10)
         scrolly.config(command=self.listbox.yview)
@@ -567,14 +602,19 @@ class ShowNewSitesDialog(tk.Toplevel):
             self.current_listbox_selected = self.listbox.get(index[0])
             if self.current_listbox_selected:
                 for item in self.new_list:
-                    if item['title'] == self.current_listbox_selected:
+                    selected = self.current_listbox_selected.split("                    ")[0]
+                    if item['title'] == selected:
                         webbrowser.open(item['url'])
                         break
 
     def update_content(self):
-        self.new_list += self.parent.new_list
         for value in self.parent.new_list:
-            self.listbox.insert(END, value.get('title', ''))
+            if value not in self.new_list:
+                title = value.get('title', '')
+                ref = value.get('ref', '')
+                insert = title + '          ' + ref
+                self.listbox.insert(END, insert)
+                self.new_list.append(value)
 
     def cancel(self):
         self.destroy()
@@ -650,5 +690,9 @@ def start():
     else:
         if date[0] <= 2017:
             if date[1] <= 12:
+                if date[2] <= 31:
+                    MainGUI()
+        elif date[0] == 2018:
+            if date[1] <= 1:
                 if date[2] <= 30:
                     MainGUI()
